@@ -39,7 +39,7 @@ public:
     void    setWidth ( int widthTile )              { this->widthTile = widthTile; }
     void    setHeight( int heightTile )             { this->heightTile = heightTile;}
     void    setChannelsCount( size_t channelsCount) { this->channelsCount = channelsCount;}
-    void    setData  ( float *data )                { this->dataTile = dataTile; }
+    void    setData  ( std::vector<float> *dataTile )                { this->dataTile = dataTile; }
 
     void    updateTileCachedData();
 

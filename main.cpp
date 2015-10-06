@@ -22,7 +22,7 @@ int main(int argc, char *argv[])
     qDebug() << "Vector size:" << img->getTileSizeInBytes()
              << "Row size in bytes:" << img->getTileRowSizeInBytes()
              << "Row pixels count:" << img->getTileRowPixelCount()
-             << "Total tile pixels count:" << img->getTileTotalPixelsCount();
+             << "Total tile pixels count:" << img->getTileTotalPixelsCount() <<
                 sizeof(float);
     delete img;
     return a.exec();
