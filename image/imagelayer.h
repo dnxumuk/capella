@@ -8,7 +8,7 @@
 class ImageLayer
 {
 private:
-    std::vector<ImageLayer*> *tiles;
+    std::vector<ImageTile*> *tiles;
     size_t countTiles;
     size_t widthLayer;
     size_t heightLayer;
@@ -16,14 +16,14 @@ private:
 
 public:
     ImageLayer();
-    ImageLayer( size_t widthLayer, size_t heightLayer, size_t channelCount, size_t countTiles );
+    ImageLayer( size_t widthLayer, size_t heightLayer, size_t channelCount, size_t tileRowsCount );
     ImageLayer( const ImageLayer& source );
     ~ImageLayer();
     // Accessors
-    ImageTile* getTilePtr( size_t tileNumber );
-    float* getRowPtr( size_t rowNumber );
-    float* getPointPtr( size_t row, size_t column);
-    float* getPixelPtr( size_t row, size_t column, size_t channel );
+    ImageTile* getTilePtr( size_t tileNumber ) const;
+    float* getRowPtr( size_t rowNumber ) const;
+    float* getPointPtr( size_t row, size_t column) const;
+    float* getPixelPtr( size_t row, size_t column, size_t channel ) const;
     //
     ImageTile& extractTile( size_t tileNumber );
     Image& extractRow ( size_t rowNumber );
