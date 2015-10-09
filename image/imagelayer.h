@@ -24,6 +24,7 @@ public:
     float* getRowPtr( size_t rowNumber ) const;
     float* getPointPtr( size_t row, size_t column) const;
     float* getPixelPtr( size_t row, size_t column, size_t channel ) const;
+
     //
     ImageTile& extractTile( size_t tileNumber );
     Image& extractRow ( size_t rowNumber );

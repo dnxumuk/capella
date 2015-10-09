@@ -37,8 +37,65 @@ ImageLayer::ImageLayer(const ImageLayer &source)
     }
 }
 
+ImageLayer::~ImageLayer()
+{
+    for (auto iter = tiles->begin(); iter != tiles->end(); iter++ )
+    {
+        delete *iter;
+    }
+    delete tiles;
+}
+
 ImageTile *ImageLayer::getTilePtr(size_t tileNumber) const
 {
     return (*tiles)[tileNumber];
+}
+
+float *ImageLayer::getRowPtr(size_t rowNumber) const
+{
+    size_t tileNumber      = rowNumber / heightTile;
+    size_t rowNumberInTile = rowNumber % heightTile;
+    if ( rowNumber > heightLayer  || tileNumber > tiles->size() || rowNumberInTile > (*tiles)[tileNumber]->getHeight() )
+        return nullptr;
+    return (*tiles)[tileNumber]->getTileRowPointer(rowNumberInTile);
+}
+
+float *ImageLayer::getPointPtr(size_t row, size_t column) const
+{
+    size_t tileNumber      = row / heightTile;
+    size_t rowNumberInTile = row % heightTile;
+    if ( row > heightLayer  || tileNumber > tiles->size() || rowNumberInTile > (*tiles)[tileNumber]->getHeight() )
+        return nullptr;
+    return (*tiles)[tileNumber]->getTilePixelPointer( rowNumberInTile , column );
+}
+
+float *ImageLayer::getPixelPtr(size_t row, size_t column, size_t channel) const
+{
+    float* pointPointer = getPointPtr( row, column );
+    if ( pointPointer == nullptr )
+        return nullptr;
+    return pointPointer + channel;
+}
+///
+/// \brief ImageLayer::extractTile
+/// \param tileNumber
+/// \return
+///
+///
+///
+///
+ImageTile &ImageLayer::extractTile(size_t tileNumber)
+{
+
+}
+
+Image &ImageLayer::extractRow(size_t rowNumber)
+{
+
+}
+
+Image &ImageLayer::extractArea(size_t rowFrom, size_t columnFrom, size_t rowCount, size_t columnCount)
+{
+
 }
 
