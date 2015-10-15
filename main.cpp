@@ -2,6 +2,7 @@
 #include <QApplication>
 #include "./core/profiler.h"
 #include "./image/imagetile.h"
+#include "./image/imagelayer.h"
 
 int main(int argc, char *argv[])
 {
@@ -25,5 +26,7 @@ int main(int argc, char *argv[])
              << "Total tile pixels count:" << img->getTileTotalPixelsCount() <<
                 sizeof(float);
     delete img;
+    ImageLayer *lr = new ImageLayer(100,100,3,10);
+    delete lr;
     return a.exec();
 }

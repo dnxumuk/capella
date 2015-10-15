@@ -1,7 +1,7 @@
 #ifndef IMAGELAYER_H
 #define IMAGELAYER_H
 #include "./imagetile.h"
-#include "./image.h"
+//#include "./image.h"
 #include <vector>
 #include "cstddef"
 
@@ -27,8 +27,8 @@ public:
 
     //
     ImageTile& extractTile( size_t tileNumber );
-    Image& extractRow ( size_t rowNumber );
-    Image& extractArea( size_t rowFrom, size_t columnFrom, size_t rowCount, size_t columnCount);
+   // Image& extractRow ( size_t rowNumber );
+   // Image& extractArea( size_t rowFrom, size_t columnFrom, size_t rowCount, size_t columnCount);
 
 };
 

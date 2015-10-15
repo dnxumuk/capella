@@ -18,14 +18,16 @@ SOURCES += main.cpp\
     core/colorspace.cpp \
     image/imagetile.cpp \
     image/imagelayer.cpp \
-    image/image.cpp
+    image/image.cpp \
+    image/imageloader.cpp
 
 HEADERS  += mainwindow.h \
     core/profiler.h \
     core/colorspace.h \
     image/imagetile.h \
     image/imagelayer.h \
-    image/image.h
+    image/image.h \
+    image/imageloader.h
 
 FORMS    += mainwindow.ui
 

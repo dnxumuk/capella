@@ -86,11 +86,15 @@ float *ImageLayer::getPixelPtr(size_t row, size_t column, size_t channel) const
 ///
 ImageTile &ImageLayer::extractTile(size_t tileNumber)
 {
-
+    if ( tileNumber > tiles->size() )
+        throw 'ImageLayer::extractTile -> wrong tileNumber';
+    ImageTile*  copiedTile = (*tiles)[tileNumber];
+    return *(new ImageTile(*copiedTile) );
 }
-
+/*
 Image &ImageLayer::extractRow(size_t rowNumber)
 {
+        throw 'ImageLayer::extractRow -> wrong tileNumber';
 
 }
 
@@ -98,4 +102,4 @@ Image &ImageLayer::extractArea(size_t rowFrom, size_t columnFrom, size_t rowCoun
 {
 
 }
-
+*/
