@@ -8,12 +8,11 @@
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
-/*
-    frm = new Frame;
-   // frm->resize(10,10);333333333333333333333
-    setCentralWidget(frm);
-    connect(ui->actionLAB_RGB, SIGNAL(activated()), SLOT(Curve()));
- */
+    frame = new FrameDisplayGL;
+    //frame->resizeGL(10,10);
+    setCentralWidget(frame);
+   // connect(ui->actionLAB_RGB, SIGNAL(activated()), SLOT(Curve()));
+
 }
 
 MainWindow::~MainWindow()

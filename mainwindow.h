@@ -1,8 +1,9 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
-//#include "headers/glFrame.h"
 #include <QMainWindow>
+#include "./gui/framedisplaygl.h"
+
 
 namespace Ui {
 class MainWindow;
@@ -18,7 +19,7 @@ public:
     
 private:
     Ui::MainWindow *ui;
-    //Frame *frm;
+    FrameDisplayGL *frame;
 
 public slots:
     void Curve();

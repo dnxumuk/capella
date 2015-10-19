@@ -4,7 +4,7 @@
 #
 #-------------------------------------------------
 
-QT       += core gui
+QT       += core gui opengl
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
@@ -19,7 +19,9 @@ SOURCES += main.cpp\
     image/imagetile.cpp \
     image/imagelayer.cpp \
     image/image.cpp \
-    image/imageloader.cpp
+    image/imageloader.cpp \
+    image/imagedisplay.cpp \
+    gui/framedisplaygl.cpp
 
 HEADERS  += mainwindow.h \
     core/profiler.h \
@@ -27,7 +29,9 @@ HEADERS  += mainwindow.h \
     image/imagetile.h \
     image/imagelayer.h \
     image/image.h \
-    image/imageloader.h
+    image/imageloader.h \
+    image/imagedisplay.h \
+    gui/framedisplaygl.h
 
 FORMS    += mainwindow.ui
 

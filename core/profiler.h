@@ -15,6 +15,7 @@ class Profiler
     public:
         Profiler();
         Profiler(QString &message);
+
         void start();
         void finish();
         void changeMessage(QString &newMessage);

@@ -1,95 +1,51 @@
 #include <QImage>
 #include <QPixmap>
-#include "headers/ImageLayer.h"
-#include "headers/ImageLoader.h"
+//#include "headers/Image.h"
+//#include "headers/ImageLoader.h"
+#include "imageloader.h"
 
 
 
-ImageLayer *ImageLoader::loadImage(char *filePath , int tileSize /*=0*/)
+Image *ImageLoader::loadImage(const char *filePath , int tileSize /*=0*/)
 {
     QString qFilePath (filePath);
-    return imageLoader(&qFilePath , tileSize );
+    //return ;
+    imageLoader(&qFilePath , tileSize );
 }
 
-ImageLayer *ImageLoader::loadImage(std::string *filePath, int tileSize /*=0*/ )
+Image *ImageLoader::loadImage(const std::string *filePath, int tileSize /*=0*/ )
 {
     QString qFilePath (filePath->c_str());
-    return imageLoader(&qFilePath , tileSize );
+    //return
+    imageLoader(&qFilePath , tileSize );
 }
 
-ImageLayer *ImageLoader::loadImage(QString *filePath , int tileSize /*=0*/ )
+Image *ImageLoader::loadImage( const QString *filePath , int tileSize /*=0*/ )
 {
-    return imageLoader(filePath , tileSize );
+    //return
+    imageLoader(filePath , tileSize );
 }
 
-ImageLayer *ImageLoader::imageLoader(QString *filePath , int tileSize )
+void ImageLoader::imageLoader( const QString *filePath , int tileSize )
 {
     // Load QPixmap  >> QImage
     // Create Image object
     // Convert QImage.data to Layer.Data
-    QPixmap i = QPixmap(*filePath);
-    QImage pImg = QImage(i.toImage());
+    QPixmap imagePixmap    = QPixmap(*filePath);
+    QImage  imageSourcePtr = QImage (imagePixmap.toImage());
 
+    ImageDisplay* imagePtr = &(ImageDisplay::getInstance());
+    imagePtr->initImage( imageSourcePtr.width() , imageSourcePtr.height() );
 
-    //ImageLayer *image = new ImageLayer(pImg.width(),pImg.height(), , 1, tileSize );
-    ImageLayer *image = new ImageLayer();
-
-    //Colorspace &tmpCsps = Colorspace::getInstance();
-    int xT = image->getXTilesCount();
-    int yT = image->getYTilesCount();
-    int channelsCount = 3;//tmpCsps.getChannelCount(image->getColorspaceLayer());
-    int pixInLine = image->getWidthLayer() * channelsCount ;
-
-    int currentXTile = 0;
-    int currentYTile = 0;
-    int currentYrow  = 0;
-
-    int totalBytes = image->getHeightLayer() * image->getWidthLayer();
-
-    int l=0;
-    bool zeroXTile = false;
-
-    for ( int readBytes = 0; readBytes < totalBytes;  )
-    {
-        if ( tileSize <= 0 )
-            tileSize = max( image->getWidthLayer() , image->getHeightLayer() );
-
-        int willReadPixels = tileSize;
-
-        if ( currentXTile >= image->getXTilesCount()-1 )
-        {
-            // Goto next line into tile
-            willReadPixels = image->getTileInfo( currentXTile, currentYTile ).xMax - image->getTileInfo( currentXTile, currentYTile ).xMin;
-            zeroXTile = true;
-        }
-        if ( currentYrow >=  image->getTileSize() )
-        {
-            // Goto net tile's row
-            currentYrow = 0;
-            currentYTile++;
-        }
-
-
-       rgba32tofloat( pImg.bits() + readBytes*4,
-                       image->getTilePointer( currentXTile, currentYTile )->getRowPointer( currentYrow ) ,
-                       willReadPixels ,
-                       1
-                      );
-        readBytes+=willReadPixels;
-        if (zeroXTile)
-        {
-            currentXTile = 0;
-            currentYrow++;
-            zeroXTile = false;
-        }
-        else
-            currentXTile++;
-    }
-    return image;
-    //image->ToOpenGL();
+    rgba32tofloat( imageSourcePtr.bits(),
+                   imagePtr->getImage()  ,
+                   imageSourcePtr.width(),
+                   imageSourcePtr.height()
+                  );
+    //return image;
 }
 
-void ImageLoader::rgba32tofloat( uchar *source, float *dest, uint width, uint height)
+void ImageLoader::rgba32tofloat( const uchar *source, float *dest, size_t width, size_t height)
 {
     const float maxRGBValue = 255.;
     const float revCoef = 1/maxRGBValue;
@@ -106,6 +62,11 @@ void ImageLoader::rgba32tofloat( uchar *source, float *dest, uint width, uint he
             srcShift+=4;
             dstShift+=3;
         }
+
+}
+
+ImageLoader::ImageLoader()
+{
 
 }
 
