@@ -1,7 +1,7 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include <QMenuBar>
-//#include "./headers/CurvesDialog.h"
+#include "./gui/toolcurvesdialog.h"
 
 
 
@@ -11,23 +11,22 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     frame = new FrameDisplayGL;
     //frame->resizeGL(10,10);
     setCentralWidget(frame);
-   // connect(ui->actionLAB_RGB, SIGNAL(activated()), SLOT(Curve()));
+    connect( ui->actionLAB_RGB, SIGNAL( triggered(bool) ), SLOT(Curve()) );
 
 }
 
 MainWindow::~MainWindow()
 {
     delete ui;
-   // delete frm;
+    delete frame;
 }
 
 void MainWindow::Curve()
 {
-/*
-    CurvesDialog *xxx = new CurvesDialog();
-    connect(xxx,SIGNAL(MySetValueSignal(int)), frm, SLOT(redraw()));
-    xxx->setImage(*(frm->image));
+    qDebug() << "AAAAAAAAAAAAAAAAAAAAaa";
+    ToolCurvesDialog *xxx = new ToolCurvesDialog();
+    connect(xxx,SIGNAL(MySetValueSignal(int)), frame, SLOT(redraw()));
+    ImageDisplay *img = &(ImageDisplay::getInstance());
+    xxx->setImage(*img);
     xxx->exec();
-*/
-
 }

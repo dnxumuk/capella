@@ -21,7 +21,9 @@ SOURCES += main.cpp\
     image/image.cpp \
     image/imageloader.cpp \
     image/imagedisplay.cpp \
-    gui/framedisplaygl.cpp
+    gui/framedisplaygl.cpp \
+    gui/toolcurvesdialog.cpp \
+    gui/toolcurvescurve.cpp
 
 HEADERS  += mainwindow.h \
     core/profiler.h \
@@ -31,8 +33,11 @@ HEADERS  += mainwindow.h \
     image/image.h \
     image/imageloader.h \
     image/imagedisplay.h \
-    gui/framedisplaygl.h
+    gui/framedisplaygl.h \
+    gui/toolcurvesdialog.h \
+    gui/toolcurvescurve.h
 
-FORMS    += mainwindow.ui
+FORMS    += mainwindow.ui \
+    ToolCurvesDialog.ui
 
-QMAKE_CXXFLAGS += -std=c++11
+QMAKE_CXXFLAGS += -std=c++11 -O2

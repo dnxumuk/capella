@@ -15,7 +15,7 @@ class FrameDisplayGL : public QGLWidget
          /*My types*/
          size_t currWidth;
          size_t currHeight;
-         float zoom = 100;
+         float zoom = 1;
   protected:
        void initGL();
        void resizeGL(int newWidth, int newHeight);

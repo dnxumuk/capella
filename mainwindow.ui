@@ -46,6 +46,9 @@
    </property>
   </action>
   <action name="actionRGB_LAB">
+   <property name="checkable">
+    <bool>false</bool>
+   </property>
    <property name="text">
     <string>RGB-&gt;LAB</string>
    </property>
