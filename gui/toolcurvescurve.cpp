@@ -5,30 +5,30 @@
 
 ToolCurvesCurve::ToolCurvesCurve()
 {
-    points = new std::list<point>();
-    curve  = new std::list<point>();
-    Limit =  new rectangle();
+    rootPoints   = new std::list<point>();
+    curvePoints  = new std::list<point>();
+    areaLimit    = new rectangle();
 
-    Limit->y_max = Limit->x_max =      std::numeric_limits<float>::max();
-    Limit->y_min = Limit->x_min = (-1)*std::numeric_limits<float>::max();
+    areaLimit->y_max = areaLimit->x_max =      std::numeric_limits<float>::max();
+    areaLimit->y_min = areaLimit->x_min = (-1)*std::numeric_limits<float>::max();
     xLeftBound  = 0.;
     xRightBound = 1.;
 
-    Limit->x_max = 1.;
-    Limit->x_min = 0.;
-    Limit->y_max = 1.;
-    Limit->y_min = 0.;
+    areaLimit->x_max = 1.;
+    areaLimit->x_min = 0.;
+    areaLimit->y_max = 1.;
+    areaLimit->y_min = 0.;
 
     xStep = 0.0001;
-    selectPoint(points->end());
+    selectPoint(rootPoints->end());
 }
 
 ToolCurvesCurve::~ToolCurvesCurve()
 {
-    points->clear();
-    curve->clear();
-    delete points;
-    delete curve;
+    rootPoints->clear();
+    curvePoints->clear();
+    delete rootPoints;
+    delete curvePoints;
     //delete Limit;
 }
 
@@ -64,10 +64,10 @@ float ToolCurvesCurve::getCurveY(unsigned int num)
 //
 std::list<point>::iterator ToolCurvesCurve::findPointByNum(unsigned int num)
 {
-    if (num >= points->size() || points->empty())
-        return points->end();
+    if (num >= rootPoints->size() || rootPoints->empty())
+        return rootPoints->end();
 
-    std::list<point>::iterator currentPoint = points->begin();
+    std::list<point>::iterator currentPoint = rootPoints->begin();
     for (uint i=0 ; i<num ; i++)
         ++currentPoint;
     return currentPoint;
@@ -75,10 +75,10 @@ std::list<point>::iterator ToolCurvesCurve::findPointByNum(unsigned int num)
 
 std::list<point>::iterator ToolCurvesCurve::findCurvePointByNum(unsigned int num)
 {
-    if (num >= curve->size() || curve->empty())
-        return curve->end();
+    if (num >= curvePoints->size() || curvePoints->empty())
+        return curvePoints->end();
 
-    std::list<point>::iterator currentPoint = curve->begin();
+    std::list<point>::iterator currentPoint = curvePoints->begin();
     for (uint i=0 ; i<num ; i++)
         ++currentPoint;
     return currentPoint;
@@ -90,7 +90,7 @@ void ToolCurvesCurve::build_spline(std::size_t n)
     if (n < 2 )
         return;
     // Init spline array
-    splines = new spline_tuple[n];
+    splines = new BezierSplineTuple[n];
     for (std::size_t i = 0; i < n; ++i)
     {
             splines[i].x = getX(i);
@@ -129,13 +129,14 @@ void ToolCurvesCurve::build_spline(std::size_t n)
     }
 }
 
-void ToolCurvesCurve::calcCurve(float step)
+void ToolCurvesCurve::calculateCurve(float step)
 {
+    qDebug() << "step" << step;
     xStep = step;
-    points->sort();
-    if (points->size() < 2) return;
+    rootPoints->sort();
+    if (rootPoints->size() < 2) return;
 
-    build_spline(points->size());
+    build_spline(rootPoints->size());
     float epsilon = 0.00001;
     for (float i=xLeftBound ; i<=xRightBound+epsilon; i+=xStep)
         addCurvePoint( i, interpolatePoint(i) );
@@ -147,7 +148,7 @@ float ToolCurvesCurve::interpolatePoint(float x) const
 {
     if (!splines)
             return std::numeric_limits<float>::quiet_NaN(); // Если сплайны ещё не построены - возвращаем NaN
-    spline_tuple *s;
+    BezierSplineTuple *s;
     if (x <= splines[0].x) // Если x меньше точки сетки x[0] - пользуемся первым эл-тов массива
             s = splines + 1;
     else if (x >= splines[n - 1].x) // Если x больше точки сетки x[n - 1] - пользуемся последним эл-том массива
@@ -175,15 +176,15 @@ float ToolCurvesCurve::interpolatePoint(float x) const
 //
 bool ToolCurvesCurve::isCorrectSize(unsigned int num)
 {
-    if ( num < points->size() )
+    if ( num < rootPoints->size() )
         return true;
     return false;
 }
 
 bool ToolCurvesCurve::isCorrectPoint(float x, float y)
 {
-    if (( x <= Limit->x_max && x >= Limit->x_min ) &&
-        ( y <= Limit->y_max && y >= Limit->y_min))
+    if (( x <= areaLimit->x_max && x >= areaLimit->x_min ) &&
+        ( y <= areaLimit->y_max && y >= areaLimit->y_min))
         return true;
     return false;
 }
@@ -196,7 +197,7 @@ int ToolCurvesCurve::addPoint(uint num, float x, float y)
 {
     if ( isCorrectPoint(x,y) || num == 0 )
     {
-        points->insert(findPointByNum(num), point(x,y) );
+        rootPoints->insert(findPointByNum(num), point(x,y) );
         return 0;
     }
     return 1;
@@ -206,7 +207,7 @@ int ToolCurvesCurve::addPoint(float x, float y)
 {
     if ( isCorrectPoint(x,y) )
     {
-        points->push_back( point(x,y) );
+        rootPoints->push_back( point(x,y) );
         return 0;
     }
     return 1;
@@ -214,13 +215,13 @@ int ToolCurvesCurve::addPoint(float x, float y)
 
 int ToolCurvesCurve::addCurvePoint(unsigned int num, float x, float y)
 {
-    curve->insert(findCurvePointByNum(num), point(x,y) );
+    curvePoints->insert(findCurvePointByNum(num), point(x,y) );
     return 0;
 }
 
 int ToolCurvesCurve::addCurvePoint(float x, float y)
 {
-    curve->push_back( point(x,y) );
+    curvePoints->push_back( point(x,y) );
 }
 
 void ToolCurvesCurve::movePoint(unsigned int num, float x_new, float y_new)
@@ -228,7 +229,7 @@ void ToolCurvesCurve::movePoint(unsigned int num, float x_new, float y_new)
     if ( isCorrectSize(num) && isCorrectPoint(x_new,y_new) )
     {
         std::list<point>::iterator currentPoint = findPointByNum(num);
-        if ( currentPoint != points->end() )
+        if ( currentPoint != rootPoints->end() )
         {
             currentPoint->x = x_new;
             currentPoint->y = y_new;
@@ -239,16 +240,16 @@ void ToolCurvesCurve::movePoint(unsigned int num, float x_new, float y_new)
 void ToolCurvesCurve::deletePoint(unsigned int num)
 {
     std::list<point>::iterator currentPoint = findPointByNum(num);
-    if ( currentPoint != points->end() )
-        points->erase(currentPoint);
+    if ( currentPoint != rootPoints->end() )
+        rootPoints->erase(currentPoint);
 }
 
 
 int ToolCurvesCurve::deleteCurvePoint(unsigned int num)
 {
     std::list<point>::iterator currentPoint = findCurvePointByNum(num);
-    if ( currentPoint != curve->end() )
-    curve->erase(currentPoint);
+    if ( currentPoint != curvePoints->end() )
+    curvePoints->erase(currentPoint);
 }
 
 
@@ -258,26 +259,26 @@ int ToolCurvesCurve::deleteCurvePoint(unsigned int num)
 
 void ToolCurvesCurve::toPointLimit()
 {
-    for ( std::list<point>::iterator currentPoint = curve->begin() ; currentPoint != curve->end(); currentPoint++ )
+    for ( std::list<point>::iterator currentPoint = curvePoints->begin() ; currentPoint != curvePoints->end(); currentPoint++ )
     {
         // x - coordinate
-        if (currentPoint->x >  Limit->x_max)
-            currentPoint->x = Limit->x_max;
+        if (currentPoint->x >  areaLimit->x_max)
+            currentPoint->x = areaLimit->x_max;
         else
-            if ( currentPoint->x < Limit->x_min )
-                currentPoint->x = Limit->x_min;
+            if ( currentPoint->x < areaLimit->x_min )
+                currentPoint->x = areaLimit->x_min;
         // y - coordinate
-        if (currentPoint->y >  Limit->y_max)
-            currentPoint->y = Limit->y_max;
+        if (currentPoint->y >  areaLimit->y_max)
+            currentPoint->y = areaLimit->y_max;
         else
-            if ( currentPoint->y < Limit->y_min )
-                currentPoint->y = Limit->y_min;
+            if ( currentPoint->y < areaLimit->y_min )
+                currentPoint->y = areaLimit->y_min;
     }
 }
 void ToolCurvesCurve::dumpPoint(unsigned int num)
 {
     std::list<point>::iterator currentPoint = findPointByNum(num);
-    if ( currentPoint != points->end() )
+    if ( currentPoint != rootPoints->end() )
         qDebug() << "Point [" << num << "] = {" << currentPoint->x << "," << currentPoint->y << "}";
     else
         qDebug() << "Point [" << num << "] is not find / exists ";
@@ -286,7 +287,7 @@ void ToolCurvesCurve::dumpPoint(unsigned int num)
 void ToolCurvesCurve::dumpCurvePoint(unsigned int num)
 {
     std::list<point>::iterator currentPoint = findCurvePointByNum(num);
-    if ( currentPoint != curve->end() )
+    if ( currentPoint != curvePoints->end() )
         qDebug() << "     CurvePoint [" << num << "] = {" << currentPoint->x << "," << currentPoint->y << "}";
     else
         qDebug() << "Point [" << num << "] is not find / exists ";
@@ -299,7 +300,7 @@ void ToolCurvesCurve::selectPoint(std::list<point>::iterator point)
 
 void ToolCurvesCurve::deselectPoint()
 {
-    selectedPoint = points->end();
+    selectedPoint = rootPoints->end();
 }
 
 point &point::operator =(const point &pt)
@@ -319,10 +320,10 @@ std::list<point>::iterator ToolCurvesCurve::findPointByCoordinates(float x, floa
     float _x1 = x+radius_y;
     float _y1 = y+radius_y;
 
-    std::list<point>::iterator currentPoint = points->begin();
-    std::list<point>::iterator nearestPoint = points->end();
+    std::list<point>::iterator currentPoint = rootPoints->begin();
+    std::list<point>::iterator nearestPoint = rootPoints->end();
     float                      nearetsPointDistance = std::numeric_limits<float>::max();
-    for (uint i=0 ; i< points->size() ; i++)
+    for (uint i=0 ; i< rootPoints->size() ; i++)
     {
         if ( currentPoint->x >= _x && currentPoint->x <= _x1 &&
              currentPoint->y >= _y && currentPoint->y <= _y1 )

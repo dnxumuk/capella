@@ -12,21 +12,21 @@ ToolCurvesDialog::ToolCurvesDialog (QWidget *pwgt/*=0*/) :
                 QDialog (pwgt, Qt::WindowTitleHint | Qt::WindowSystemMenuHint), ui(new Ui::ToolCurvesDialog)
 {
     ui->setupUi(this);
-    curve = new ToolCurvesCurve();
+    // Init visual components
     border    = 5;
     grid_size = 8.;
     circle_size = 4.;
-
     borderPen  = new QPen(Qt::red);
     gridPen    = new QPen(Qt::lightGray);
-    centerPen  = new QPen(Qt::gray);
+    centerPen  = new QPen(Qt::darkGray);
     pointPen   = new QPen(Qt::gray);
-    curvePen   = new QPen(Qt::lightGray);
-
+    curvePen   = new QPen(Qt::darkBlue);
+    curvePen->setWidth(2);
+    // Init curve && scene
+    curve                 = new ToolCurvesCurve();
     QGraphicsScene *scene = new QGraphicsScene(ui->graphicsView);
     ui->graphicsView->viewport()->setMouseTracking(1);
     ui->graphicsView->setMouseTracking(1);
-
     ui->graphicsView->setScene(scene);
     ui->graphicsView->viewport()->installEventFilter(this);
 }
@@ -34,11 +34,9 @@ ToolCurvesDialog::ToolCurvesDialog (QWidget *pwgt/*=0*/) :
 void ToolCurvesDialog::resizeEvent(QResizeEvent *event)
 {
     QSize newSize  = event->size();
-    int new_width  = event->size().width()  * ui->graphicsView->width () / event->oldSize().width() ;
-    int new_height = event->size().height() * ui->graphicsView->height() / event->oldSize().height() ;
-    ui->graphicsView->resize(new_width, new_height );
-    // ????
-    //ui->graphicsView->scene()->clear();
+    int newWidth  = event->size().width()  * ui->graphicsView->width () / event->oldSize().width() ;
+    int newHeight = event->size().height() * ui->graphicsView->height() / event->oldSize().height() ;
+    ui->graphicsView->resize(newWidth, newHeight );
     width  = ui->graphicsView->width();
     height = ui->graphicsView->height();
     redraw();
@@ -47,31 +45,13 @@ void ToolCurvesDialog::resizeEvent(QResizeEvent *event)
 void ToolCurvesDialog::setImage(ImageDisplay &img)
 {
     this->img = &img;
-    //Colorspace &csp = Colorspace::getInstance();
     ui->listWidget->clear();
-        // Add && Make all channel-items checkable ;
-    for (int i=0 ; i < 3  ; i++ )
-    {
-        QString a;
-        if (i==0)
-        {
-            a=QString("R");
-        }
-        if (i==1)
-        {
-            a=QString("G");
-        }
-        if (i==2)
-        {
-            a=QString("B");
-        }
-        ui->listWidget->addItem( a );
-
+    /*  Here we must to add items to item-box wich mapping image-channels
+     *     like this:
         QListWidgetItem *currentItem = ui->listWidget->item(ui->listWidget->count()-1);
         currentItem->setFlags( currentItem->flags() | Qt::ItemIsUserCheckable );
         currentItem->setCheckState(Qt::Checked);
-    }
-
+    */
 }
 
 
@@ -86,9 +66,9 @@ bool ToolCurvesDialog::eventFilter(QObject *obj, QEvent *event)
             {
                 // LMB pressed. Add new point or select from existing &
 
-                point mouseCoord = get255Values( point( mouseEvent->x(),mouseEvent->y() ) );
-                point radius     = get255Values( point(10,10) );
-                std::list<point>::iterator xxx = curve->findPointByCoordinates(mouseCoord.x,mouseCoord.y, radius.x, radius.y);
+                Point mouseCoord = get255Values( Point( mouseEvent->x(),mouseEvent->y() ) );
+                Point radius     = get255Values( Point(10,10) );
+                std::list<Point>::iterator xxx = curve->findPointByCoordinates(mouseCoord.x,mouseCoord.y, radius.x, radius.y);
                 if (curve->pointExists(xxx))
                 {
                     qDebug() << "     Nearest point ... " << xxx->x << xxx->y;
@@ -97,7 +77,8 @@ bool ToolCurvesDialog::eventFilter(QObject *obj, QEvent *event)
                 else
                 {
                     QGraphicsScene *scene = ui->graphicsView->scene();
-                    point pt = get255Values(point (mouseEvent->pos().x(),mouseEvent->pos().y()) );
+                    Point pt = get255Values( Point (mouseEvent->pos().x(),
+                                                    mouseEvent->pos().y()) );
                     qDebug() << "Add" << pt.x << pt.y;
                     curve->addPoint(pt.x,pt.y);
                     redraw();
@@ -114,7 +95,7 @@ bool ToolCurvesDialog::eventFilter(QObject *obj, QEvent *event)
             QMouseEvent *mouseEvent = static_cast<QMouseEvent*>(event);
             if ( (mouseEvent->buttons() & Qt::LeftButton) && curve->pointExists(selectedPoint))
             {
-                point newCoord = get255Values(point(mouseEvent->x(),mouseEvent->y()));
+                Point newCoord = get255Values( Point(mouseEvent->x(),mouseEvent->y()) );
                 curve->selectedPoint->x = newCoord.x;
                 curve->selectedPoint->y = newCoord.y;
                 redraw();
@@ -156,7 +137,7 @@ inline float getSuperPrecisionValue(float x, float x0, float x1, float y0,float 
 
 void ToolCurvesDialog::processingImage()
 {
-    if (curve->curve->size() < 5)
+    if (curve->curvePoints->size() < 5)
         return;
     ImageDisplay &img = *(this->img);
     // Make array coefs
@@ -164,14 +145,14 @@ void ToolCurvesDialog::processingImage()
     float coef[size_of];
     for (uint i=0 ; i< size_of; i++)
     {
-        for (std::list<point>::iterator current  = curve->curve->begin();
-                                        current != curve->curve->end(); current++)
+        for (auto iterCurvePoint = curve->curvePoints->begin(); iterCurvePoint != curve->curvePoints->end(); iterCurvePoint++)
         {
-            if ( i/(size_of/1.-1.) <= current->x )
+            if ( i/(size_of/1.-1.) <= iterCurvePoint->x )
             {
-                std::list<point>::iterator next = current;
+                auto next = iterCurvePoint;
                 ++next;
-                coef[i] = 1 - getSuperPrecisionValue( i/(size_of/1.-1.), current->x, next->x, current->y,next->y);
+                coef[i] = 1 - getSuperPrecisionValue( i/(size_of/1.-1.), iterCurvePoint->x, next->x,
+                                                                         iterCurvePoint->y, next->y );
                 //qDebug() << "Coef " << i << " is " << coef[i];
                 break;
             }
@@ -179,12 +160,7 @@ void ToolCurvesDialog::processingImage()
     }
     //
     bool channelProcessing[4] = { false, false, false, false };
-    //Colorspace &csp = Colorspace::getInstance();
-    for ( uint i=0 ; i < 3 ; i++)
-    {
-        if (ui->listWidget->item(i)->checkState() == Qt::Checked)
-            channelProcessing[i] = true;
-    }
+
     float* tmp = img.getImage();
     for (uint j=0 ; j< img.getWidth()*img.getHeight(); j++ )
     {
@@ -238,7 +214,10 @@ void ToolCurvesDialog::DrawBorder()
     scene->addLine( x0, y1, x0, y0, *borderPen);
 }
 
-void ToolCurvesDialog::setDefaultValues() {}
+void ToolCurvesDialog::setDefaultValues()
+{
+
+}
 
 void ToolCurvesDialog::drawPoints()
 {
@@ -247,7 +226,7 @@ void ToolCurvesDialog::drawPoints()
     float zeroy = border -  height/2. ;
     float circleCorrection = -circle_size/2.;
 
-    for  ( uint i=0; i < curve->points->size(); i++ )
+    for  ( uint i=0; i < curve->rootPoints->size(); i++ )
     {
         // Graphic scene w/h witout borders
         int dx = width -2*(int)border;
@@ -269,57 +248,49 @@ void ToolCurvesDialog::drawPoints()
 
 void ToolCurvesDialog::drawCurve()
 {
-    QPen line (Qt::blue);
-    line.setWidth(1);
     QGraphicsScene *scene = ui->graphicsView->scene();
-
     float zerox =  border - width/2. ;
     float zeroy =  border - height/2.;
-    float coefx =  width   -2*border;
-    float coefy =  height  -2*border;
+    float areaSizeX =  width   -2*border;
+    float areaSizeY =  height  -2*border;
 
-    float *curve_x = new float[curve->curve->size()];
-    float *curve_y = new float[curve->curve->size()];
-    int j=0;
-
-    for  ( std::list<point>::iterator current = curve->curve->begin(); current != curve->curve->end() ; current++, j++ )
+    float *curveXCoords = new float[curve->curvePoints->size()];
+    float *curveYCoords = new float[curve->curvePoints->size()];
+    int  j = 0;
+    for  ( auto iterCurvePoint  = curve->curvePoints->begin();
+                iterCurvePoint != curve->curvePoints->end() ;
+           iterCurvePoint++, j++ )
     {
-        curve_x[j] = coefx*current->x;
-        curve_y[j] = coefy*current->y;
+        curveXCoords[j] = areaSizeX*iterCurvePoint->x + zeroy;
+        curveYCoords[j] = areaSizeY*iterCurvePoint->y + zeroy;
     }
-
-    if  (curve->curve->size() > 1)
-        for  ( int i=0; i < curve->curve->size() - 1 ; i++ )
-            scene->addLine(zerox + curve_x[i], zeroy + curve_y[i], zerox + curve_x[i+1] , zeroy + curve_y[i+1], line);
-    delete curve_x, curve_y;
+    if  (this->curve->curvePoints->size() > 1)
+        for  ( int i=0; i < this->curve->curvePoints->size() - 1 ; i++ )
+            scene->addLine( curveXCoords[i],   curveYCoords[i],
+                            curveXCoords[i+1], curveYCoords[i+1],
+                           *curvePen );
+    delete curveXCoords, curveYCoords;
 }
 
 void ToolCurvesDialog::redraw()
 {
-    curve->curve->clear();
-    //double  t1 = omp_get_wtime();
-
-    if ( 3./(ui->graphicsView->geometry().width()-2*border) > 1/255.)
-        curve->calcCurve( 1/255. );
-    else
-        curve->calcCurve( 3./(ui->graphicsView->geometry().width()-2*border) );
-
+    // This constant is inverse of value how precisely bezier-curve will be computed ( 1 / (ticksCount) )
+    const float redrawBezierCurveStepX = 1/256. ;
+    curve->curvePoints->clear();
+    curve->calculateCurve(redrawBezierCurveStepX);
     ui->graphicsView->scene()->clear();
     DrawBorder();
     DrawGrid();
     drawPoints();
     drawCurve();
-    //double t2 = omp_get_wtime();
 }
-
-
-point ToolCurvesDialog::get255Values(const point &pt)
+/*
+ *  Returning relation coordiantes of point relates of area inside border
+ */
+Point ToolCurvesDialog::get255Values(const Point &pt)
 {
-    float area_width  = width  - 2*border ;
-    float area_height = height - 2*border ;
-
-    float _x = (pt.x - border) / area_width;
-    float _y = (pt.y - border) / area_height;
-    return point(_x, _y);
+    return Point ( (float)(pt.x - border) / (width  - 2*border) ,
+                   (float)(pt.y - border) / (height - 2*border)
+                 );
 }
 

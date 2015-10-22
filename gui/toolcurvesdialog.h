@@ -16,7 +16,7 @@ class ToolCurvesDialog : public QDialog
 private:
     Ui::ToolCurvesDialog *ui;
     ToolCurvesCurve *curve;
-    std::list<point>::iterator selectedPoint;
+    std::list<Point>::iterator selectedPoint;
     ImageDisplay *img;
     /* Makeup parameters */
     size_t  border;
@@ -44,8 +44,8 @@ private:
     void drawPoints();
     void drawCurve();
     void redraw();
-    point getValues    (const point& point);
-    point get255Values (const point& point);
+    Point getValues    (const Point& point);
+    Point get255Values (const Point& point);
 public:
     explicit ToolCurvesDialog (QWidget *pwgt = 0);
     virtual void resizeEvent ( QResizeEvent * event );
