@@ -6,20 +6,20 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>510</width>
-    <height>501</height>
+    <width>426</width>
+    <height>392</height>
    </rect>
   </property>
   <property name="sizePolicy">
-   <sizepolicy hsizetype="Maximum" vsizetype="Maximum">
-    <horstretch>1</horstretch>
-    <verstretch>1</verstretch>
+   <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+    <horstretch>0</horstretch>
+    <verstretch>0</verstretch>
    </sizepolicy>
   </property>
-  <property name="minimumSize">
+  <property name="maximumSize">
    <size>
-    <width>300</width>
-    <height>500</height>
+    <width>426</width>
+    <height>392</height>
    </size>
   </property>
   <property name="sizeIncrement">
@@ -34,8 +34,8 @@
   <widget class="QDialogButtonBox" name="buttonBox_2">
    <property name="geometry">
     <rect>
-     <x>160</x>
-     <y>450</y>
+     <x>120</x>
+     <y>340</y>
      <width>176</width>
      <height>27</height>
     </rect>
@@ -47,8 +47,8 @@
   <widget class="QGraphicsView" name="graphicsView">
    <property name="geometry">
     <rect>
-     <x>20</x>
-     <y>40</y>
+     <x>10</x>
+     <y>10</y>
      <width>256</width>
      <height>281</height>
     </rect>
@@ -99,8 +99,8 @@
   <widget class="QPushButton" name="pushButton">
    <property name="geometry">
     <rect>
-     <x>40</x>
-     <y>450</y>
+     <x>10</x>
+     <y>340</y>
      <width>98</width>
      <height>27</height>
     </rect>
@@ -112,8 +112,8 @@
   <widget class="QListWidget" name="listWidget">
    <property name="geometry">
     <rect>
-     <x>290</x>
-     <y>40</y>
+     <x>280</x>
+     <y>10</y>
      <width>131</width>
      <height>192</height>
     </rect>
@@ -122,8 +122,8 @@
   <widget class="QDoubleSpinBox" name="doubleSpinBox">
    <property name="geometry">
     <rect>
-     <x>30</x>
-     <y>340</y>
+     <x>10</x>
+     <y>300</y>
      <width>62</width>
      <height>27</height>
     </rect>
@@ -132,8 +132,8 @@
   <widget class="QDoubleSpinBox" name="doubleSpinBox_2">
    <property name="geometry">
     <rect>
-     <x>120</x>
-     <y>340</y>
+     <x>90</x>
+     <y>300</y>
      <width>62</width>
      <height>27</height>
     </rect>

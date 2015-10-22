@@ -40,4 +40,4 @@ HEADERS  += mainwindow.h \
 FORMS    += mainwindow.ui \
     ToolCurvesDialog.ui
 
-QMAKE_CXXFLAGS += -std=c++11 -O2
+QMAKE_CXXFLAGS += -std=c++11 -O2 -msse

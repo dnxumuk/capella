@@ -23,7 +23,7 @@ private:
     float   grid_size;
     float   circle_size;
     size_t  width;
-    size_t   height;
+    size_t  height;
     /* Makeup accessors */
     void   setBorderSize(size_t size) { border = size; }
     size_t getBorderSize()            { return border;}

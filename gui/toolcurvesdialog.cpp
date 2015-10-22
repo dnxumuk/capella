@@ -29,10 +29,6 @@ ToolCurvesDialog::ToolCurvesDialog (QWidget *pwgt/*=0*/) :
 
     ui->graphicsView->setScene(scene);
     ui->graphicsView->viewport()->installEventFilter(this);
-
-    ui->listWidget->addItem("R");
-    ui->listWidget->addItem("G");
-    ui->listWidget->addItem("B");
 }
 
 void ToolCurvesDialog::resizeEvent(QResizeEvent *event)
@@ -102,6 +98,7 @@ bool ToolCurvesDialog::eventFilter(QObject *obj, QEvent *event)
                 {
                     QGraphicsScene *scene = ui->graphicsView->scene();
                     point pt = get255Values(point (mouseEvent->pos().x(),mouseEvent->pos().y()) );
+                    qDebug() << "Add" << pt.x << pt.y;
                     curve->addPoint(pt.x,pt.y);
                     redraw();
                 }
@@ -189,7 +186,7 @@ void ToolCurvesDialog::processingImage()
             channelProcessing[i] = true;
     }
     float* tmp = img.getImage();
-    for (uint j=0 ; j< img.getWidth()*img.getHeight(); j+=3 )
+    for (uint j=0 ; j< img.getWidth()*img.getHeight(); j++ )
     {
         *(tmp)   = channelProcessing[0] ? coef[FastToInt(*(tmp  )*(size_of-1))]    :  *(tmp)   ;
         *(tmp+1) = channelProcessing[1] ? coef[FastToInt(*(tmp+1)*(size_of-1))]:  *(tmp+1)   ;
@@ -231,12 +228,10 @@ void ToolCurvesDialog::DrawGrid()
 void ToolCurvesDialog::DrawBorder()
 {
     QGraphicsScene *scene = ui->graphicsView->scene();
-    //QPen brd (Qt::red);
-    int x0 = -width/2  + border ;
-    int y0 = -height/2 + border;
+    int x0 =  border   - width/2 ;
     int x1 =  width/2  - border;
+    int y0 =  border   - height/2 ;
     int y1 =  height/2 - border;
-    // Border
     scene->addLine( x0, y0, x1, y0, *borderPen);
     scene->addLine( x1, y0, x1, y1, *borderPen);
     scene->addLine( x1, y1, x0, y1, *borderPen);
@@ -247,19 +242,28 @@ void ToolCurvesDialog::setDefaultValues() {}
 
 void ToolCurvesDialog::drawPoints()
 {
-    //QPen circle (Qt::black);
-    //circle.setWidth(1);
     QGraphicsScene *scene = ui->graphicsView->scene();
-
-    float zerox = -width/2. + border ;
-    float zeroy = -height/2.+ border ;
+    float zerox = border -  width/2. ;
+    float zeroy = border -  height/2. ;
     float circleCorrection = -circle_size/2.;
 
     for  ( uint i=0; i < curve->points->size(); i++ )
     {
-        float x = curve->getRealX( width -2*border,i);
-        float y = curve->getRealY( height-2*border,i);
-        scene->addEllipse( zerox + x + circleCorrection  , zeroy + y + circleCorrection , circle_size, circle_size, *pointPen );
+        // Graphic scene w/h witout borders
+        int dx = width -2*(int)border;
+        int dy = height-2*(int)border;
+
+        float x = curve->getRealX( dx,i);
+        float y = curve->getRealY( dy,i);
+
+        float dd = zerox + x + circleCorrection;
+        float dl = zeroy + y + circleCorrection;
+
+
+        scene->addEllipse( zerox + x + circleCorrection  ,
+                             zeroy + y + circleCorrection ,
+                             circle_size, circle_size, *pointPen );
+
     }
 }
 
@@ -269,8 +273,8 @@ void ToolCurvesDialog::drawCurve()
     line.setWidth(1);
     QGraphicsScene *scene = ui->graphicsView->scene();
 
-    float zerox = -width/2. + border ;
-    float zeroy = -height/2.+ border ;
+    float zerox =  border - width/2. ;
+    float zeroy =  border - height/2.;
     float coefx =  width   -2*border;
     float coefy =  height  -2*border;
 

@@ -14,8 +14,8 @@ FrameDisplayGL ::FrameDisplayGL(QWidget *parent)
     Profiler timer(msg);
     timer.start();
     ImageLoader i;
-    //i.loadImage("/home/xmk/programming/skeleton/test/images/interpolate.bmp", 1 );
-    i.loadImage("/home/xmk/programming/skeleton/test/images/rgb.bmp", 1 );
+    i.loadImage("/home/xmk/programming/capella/test/images/rgb.bmp", 1 );
+
     //i.loadImage("/home/xmk/programming/skeleton/test/images/m42.jpg", 1 );
     timer.finish();
 }

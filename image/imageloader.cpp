@@ -58,7 +58,6 @@ void ImageLoader::rgba32tofloat( const uchar *source, float *dest, size_t width,
             dest[ dstShift ]    = source[ srcShift + 2] * revCoef;
             dest[ dstShift +1 ] = source[ srcShift + 1] * revCoef;
             dest[ dstShift +2 ] = source[ srcShift    ] * revCoef;
-
             srcShift+=4;
             dstShift+=3;
         }
