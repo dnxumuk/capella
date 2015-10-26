@@ -29,7 +29,6 @@ ToolCurvesDialog::ToolCurvesDialog (QWidget *pwgt/*=0*/) :
     ui->graphicsView->setMouseTracking(1);
     ui->graphicsView->setScene(scene);
     ui->graphicsView->viewport()->installEventFilter(this);
-
 }
 
 void ToolCurvesDialog::resizeEvent(QResizeEvent *event)
@@ -81,7 +80,7 @@ bool ToolCurvesDialog::eventFilter(QObject *obj, QEvent *event)
                     Point pt = get255Values( Point (mouseEvent->pos().x(),
                                                     mouseEvent->pos().y()) );
                     qDebug() << "Add" << pt.x << pt.y;
-                    curve->addRootPoint(pt);
+                    curve->addPoint(pt.x,pt.y);
                     redraw();
                 }
             }
@@ -138,7 +137,7 @@ inline float getSuperPrecisionValue(float x, float x0, float x1, float y0,float 
 
 void ToolCurvesDialog::processingImage()
 {
-    if (curve->curvePoints->size() < 3)
+    if (curve->curvePoints->size() < 5)
         return;
     ImageDisplay &img = *(this->img);
     // Make array coefs
@@ -222,7 +221,6 @@ void ToolCurvesDialog::setDefaultValues()
 
 void ToolCurvesDialog::drawPoints()
 {
-    //qDebug() << "Size"  << curve->rootPoints->size();
     QGraphicsScene *scene = ui->graphicsView->scene();
     float zerox = border -  width/2. ;
     float zeroy = border -  height/2. ;
@@ -230,13 +228,12 @@ void ToolCurvesDialog::drawPoints()
 
     for  ( uint i=0; i < curve->rootPoints->size(); i++ )
     {
-        //qDebug() << "Size"  << curve->rootPoints->size();
         // Graphic scene w/h witout borders
         int dx = width -2*(int)border;
         int dy = height-2*(int)border;
 
-        float x = curve->getAbsoluteRootPointCoordinates( dx , i ).x ;
-        float y = curve->getAbsoluteRootPointCoordinates( dy , i ).y ;
+        float x = curve->getRealX( dx,i);
+        float y = curve->getRealY( dy,i);
 
         float dd = zerox + x + circleCorrection;
         float dl = zeroy + y + circleCorrection;

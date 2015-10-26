@@ -9,67 +9,6 @@ class Point;
 class Rectangle;
 class BezierSplineTuple;
 
-class ToolCurvesCurve
-{
-public:
-    std::list<Point> *rootPoints;
-    std::list<Point> *curvePoints;
-    std::list<Point>::iterator selectedPoint;
-    BezierSplineTuple *splines;
-    Rectangle *areaLimit;
-    std::size_t n; // Количество узлов сетки
-
-
-    std::list<Point>::iterator findPointByNum      (size_t num);
-    std::list<Point>::iterator findCurvePointByNum (size_t num);
-
-    void  build_spline(std::size_t n);
-    void  calculateCurve  ( float step );
-    float interpolatePoint( float x ) const;
-
-
-    void toPointLimit();
-    bool isCorrectSize  (uint num);
-    bool isCorrectPoint (float x, float y);
-
-    float xLeftBound;
-    float xRightBound;
-    float xStep;
-public:
-    ToolCurvesCurve();
-    ~ToolCurvesCurve();
-    int  addPoint   (uint num, float x, float y);
-    int  addPoint(float x, float y);
-
-    int  addCurvePoint (uint num, float x, float y);
-    int  addCurvePoint (float x, float y);
-
-    int  deleteCurvePoint (uint num);
-
-    void movePoint  (uint num,float x_new, float y_new);
-    void deletePoint(uint num);
-
-    float getX (uint num);
-    float getY (uint num);
-    float getRealX (uint size, int num) {  return size*getX(num); };
-    float getRealY (uint size, int num) {  return size*getY(num); };
-
-    float getCurveX (uint num);
-    float getCurveY (uint num);
-    float getCurveRealX (uint size, int num) {  return size*getCurveX(num); };
-    float getCurveRealY (uint size, int num) {  return size*getCurveY(num); };
-
-    void resetAll();
-    void dumpPoint(uint num);
-    void dumpCurvePoint(unsigned int num);
-
-    void selectPoint   (std::list<Point>::iterator point);
-    void deselectPoint ();
-    std::list<Point>::iterator findPointByCoordinates(float x, float y, float radius_x, float radius_y);
-    bool pointExists   (std::list<Point>::iterator pt) { return ( &(*pt) == &(*rootPoints->end()) )?0:1; };
-};
-
-
 struct Point
 {
     float x;
@@ -81,9 +20,62 @@ struct Point
     bool operator <   ( const Point& pt) { if (pt.x > this->x) return true; return false; }
 };
 
+
+class ToolCurvesCurve
+{
+public:
+    std::list<Point>::iterator findPointByNum(unsigned int num);
+    float getY(uint num);
+    float getX(uint num);
+
+    std::list<Point> *rootPoints;
+    std::list<Point> *curvePoints;
+    std::list<Point>::iterator selectedPoint;
+    BezierSplineTuple *splines;
+    Rectangle         *areaLimit;
+    std::list<Point>::iterator findRootPointByPosition  (size_t position );
+    std::list<Point>::iterator findCurvePointByPosition (size_t position );
+    std::size_t rootPointsCount; // Количество узлов сетки
+
+    void  buildBezierSpline( size_t rootPointsCount );
+    void  calculateCurve   ( float step );
+    float interpolatePoint ( float x ) const;
+
+
+    void toPointLimit();
+    bool isCorrectSize  (uint num);
+    bool isCorrectPoint ( const Point& point );
+
+    float xAreaLeftBound;
+    float xAreaRightBound;
+    float xCurveStep;
+public:
+    ToolCurvesCurve();
+    ~ToolCurvesCurve();
+    int  addRootPoint   ( const Point& point, size_t position = 0 );
+    int  addCurvePoint  ( const Point& point, size_t position = 0 );
+
+    void deleteRootPoint( size_t postion );
+
+    Point getRootPointCoordinates  ( size_t position );
+    Point getCurvePointCoordinates ( size_t position );
+    Point getAbsoluteRootPointCoordinates  ( size_t size, size_t position );
+    Point getAbsoluteCurvePointCoordinates ( size_t size, size_t position );
+
+    void resetAll(); // nonrealized
+
+
+    void selectPoint   (std::list<Point>::iterator point);
+    void deselectPoint ();
+    std::list<Point>::iterator findPointByCoordinates(float x, float y, float radius_x, float radius_y);
+    bool pointExists   (std::list<Point>::iterator pt) { return ( &(*pt) == &(*rootPoints->end()) )?0:1; };
+};
+
+
 struct Rectangle
 {
-    float x_max,x_min,y_max,y_min;
+    float xFrom , xTo,
+          yFrom , yTo;
 };
 
 struct BezierSplineTuple

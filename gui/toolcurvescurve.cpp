@@ -5,160 +5,167 @@
 
 ToolCurvesCurve::ToolCurvesCurve()
 {
-    rootPoints   = new std::list<point>();
-    curvePoints  = new std::list<point>();
-    areaLimit    = new rectangle();
-
-    areaLimit->y_max = areaLimit->x_max =      std::numeric_limits<float>::max();
-    areaLimit->y_min = areaLimit->x_min = (-1)*std::numeric_limits<float>::max();
-    xLeftBound  = 0.;
-    xRightBound = 1.;
-
-    areaLimit->x_max = 1.;
-    areaLimit->x_min = 0.;
-    areaLimit->y_max = 1.;
-    areaLimit->y_min = 0.;
-
-    xStep = 0.0001;
+    rootPoints   = new std::list<Point>();
+    curvePoints  = new std::list<Point>();
+    areaLimit    = new Rectangle();
+    xAreaLeftBound  = 0.;
+    xAreaRightBound = 1.;
+    areaLimit->xTo   = 1.;
+    areaLimit->xFrom = 0.;
+    areaLimit->yTo   = 1.;
+    areaLimit->yFrom = 0.;
+    xCurveStep = 0.0001;
     selectPoint(rootPoints->end());
 }
-
 ToolCurvesCurve::~ToolCurvesCurve()
 {
     rootPoints->clear();
     curvePoints->clear();
     delete rootPoints;
     delete curvePoints;
-    //delete Limit;
 }
 
-//
-// Getting coordinates
-//
+Point ToolCurvesCurve::getRootPointCoordinates( size_t position )
+{
+    auto currentPoint = findRootPointByPosition( position );
+    return Point(currentPoint->x, currentPoint->y);
+}
+Point ToolCurvesCurve::getCurvePointCoordinates( size_t position )
+{
+    auto currentPoint = findCurvePointByPosition( position );
+    return Point(currentPoint->x,currentPoint->y);
+}
+Point ToolCurvesCurve::getAbsoluteRootPointCoordinates( size_t size, size_t position )
+{
+    Point tmp = getRootPointCoordinates( position );
+    return Point ( size*tmp.x , size*tmp.y );
+}
+Point ToolCurvesCurve::getAbsoluteCurvePointCoordinates( size_t size, size_t position )
+{
+    Point tmp = getCurvePointCoordinates( position );
+    return Point ( size*tmp.x , size*tmp.y );
+}
+std::list<Point>::iterator ToolCurvesCurve::findRootPointByPosition( size_t position )
+{
+    if ( position >= rootPoints->size() || rootPoints->empty())
+        return rootPoints->end();
+    std::list<Point>::iterator currentPoint = rootPoints->begin();
+    for ( size_t i=0 ; i < position ; i++)
+        ++currentPoint;
+    return currentPoint;
+}
+std::list<Point>::iterator ToolCurvesCurve::findCurvePointByPosition( size_t position )
+{
+    if ( position >= curvePoints->size() || curvePoints->empty())
+        return curvePoints->end();
+    auto currentPoint = curvePoints->begin();
+    for ( size_t i=0 ; i < position ; i++)
+        ++currentPoint;
+    return currentPoint;
+}
+/*********************/
 float ToolCurvesCurve::getX(uint num)
 {
-    std::list<point>::iterator currentPoint = findPointByNum(num);
+    std::list<Point>::iterator currentPoint = findPointByNum(num);
     return currentPoint->x;
 }
 
 float ToolCurvesCurve::getY(uint num)
 {
-    std::list<point>::iterator currentPoint = findPointByNum(num);
+    std::list<Point>::iterator currentPoint = findPointByNum(num);
     return currentPoint->y;
 }
 
-float ToolCurvesCurve::getCurveX(unsigned int num)
-{
-    std::list<point>::iterator currentPoint = findCurvePointByNum(num);
-    return currentPoint->x;
-}
-
-float ToolCurvesCurve::getCurveY(unsigned int num)
-{
-    std::list<point>::iterator currentPoint = findCurvePointByNum(num);
-    return currentPoint->y;
-}
-
-//
-// Finding point by number
-//
-std::list<point>::iterator ToolCurvesCurve::findPointByNum(unsigned int num)
+std::list<Point>::iterator ToolCurvesCurve::findPointByNum(unsigned int num)
 {
     if (num >= rootPoints->size() || rootPoints->empty())
         return rootPoints->end();
 
-    std::list<point>::iterator currentPoint = rootPoints->begin();
+    std::list<Point>::iterator currentPoint = rootPoints->begin();
     for (uint i=0 ; i<num ; i++)
         ++currentPoint;
     return currentPoint;
 }
 
-std::list<point>::iterator ToolCurvesCurve::findCurvePointByNum(unsigned int num)
-{
-    if (num >= curvePoints->size() || curvePoints->empty())
-        return curvePoints->end();
 
-    std::list<point>::iterator currentPoint = curvePoints->begin();
-    for (uint i=0 ; i<num ; i++)
-        ++currentPoint;
-    return currentPoint;
+void ToolCurvesCurve::buildBezierSpline( size_t rootPointsCount )
+{
+    int n = rootPointsCount;
+    this->rootPointsCount = n;
+     if (n < 2 )
+         return;
+     splines = new BezierSplineTuple[ rootPointsCount ];
+
+     for ( size_t i = 0; i < rootPointsCount; ++i )
+     {
+             splines[i].x = getRootPointCoordinates(i).x;
+             splines[i].a = getRootPointCoordinates(i).y;
+             qDebug() << "Roots" << getRootPointCoordinates(i).x << getRootPointCoordinates(i).y;
+     }
+     splines[0].c = 0.;
+
+
+     //
+     double *alpha = new double[n - 1];
+     double *beta = new double[n - 1];
+     double A, B, C, F, h_i, h_i1, z;
+     alpha[0] = beta[0] = 0.;
+     for (std::size_t i = 1; i < n - 1; ++i)
+     {
+         h_i = getX(i) - getX(i-1), h_i1 = getX(i+1) - getX(i);
+             A = h_i;
+             C = 2. * (h_i + h_i1);
+             B = h_i1;
+             F = 6. * ( ( getY(i+1) - getY(i) ) / h_i1 - (getY(i) - getY(i-1)) / h_i);
+             z = (A * alpha[i - 1] + C);
+             alpha[i] = -B / z;
+             beta[i] = (F - A * beta[i - 1]) / z;
+     }
+     splines[n - 1].c = (F - A * beta[n - 2]) / (C + A * alpha[n - 2]);
+     // Нахождение решения - обратный ход метода прогонки
+     for (std::size_t i = n - 2; i > 0; --i)
+             splines[i].c = alpha[i] * splines[i + 1].c + beta[i];
+     // Освобождение памяти, занимаемой прогоночными коэффициентами
+     delete[] beta;
+     delete[] alpha;
+     // По известным коэффициентам c[i] находим значения b[i] и d[i]
+     for (std::size_t i = n - 1; i > 0; --i)
+     {
+             double h_i = getX(i) - getX(i-1);
+             splines[i].d = (splines[i].c - splines[i - 1].c) / h_i;
+             splines[i].b = h_i * (2. * splines[i].c + splines[i - 1].c) / 6. + (getY(i) - getY(i-1)) / h_i;
+     }
 }
 
-void ToolCurvesCurve::build_spline(std::size_t n)
+void ToolCurvesCurve::calculateCurve(float xCurveStep)
 {
-    this->n = n;
-    if (n < 2 )
-        return;
-    // Init spline array
-    splines = new BezierSplineTuple[n];
-    for (std::size_t i = 0; i < n; ++i)
-    {
-            splines[i].x = getX(i);
-            splines[i].a = getY(i);
-    }
-    splines[0].c = 0.;
-    //
-    double *alpha = new double[n - 1];
-    double *beta = new double[n - 1];
-    double A, B, C, F, h_i, h_i1, z;
-    alpha[0] = beta[0] = 0.;
-    for (std::size_t i = 1; i < n - 1; ++i)
-    {
-        h_i = getX(i) - getX(i-1), h_i1 = getX(i+1) - getX(i);
-            A = h_i;
-            C = 2. * (h_i + h_i1);
-            B = h_i1;
-            F = 6. * ( ( getY(i+1) - getY(i) ) / h_i1 - (getY(i) - getY(i-1)) / h_i);
-            z = (A * alpha[i - 1] + C);
-            alpha[i] = -B / z;
-            beta[i] = (F - A * beta[i - 1]) / z;
-    }
-    splines[n - 1].c = (F - A * beta[n - 2]) / (C + A * alpha[n - 2]);
-    // Нахождение решения - обратный ход метода прогонки
-    for (std::size_t i = n - 2; i > 0; --i)
-            splines[i].c = alpha[i] * splines[i + 1].c + beta[i];
-    // Освобождение памяти, занимаемой прогоночными коэффициентами
-    delete[] beta;
-    delete[] alpha;
-    // По известным коэффициентам c[i] находим значения b[i] и d[i]
-    for (std::size_t i = n - 1; i > 0; --i)
-    {
-            double h_i = getX(i) - getX(i-1);
-            splines[i].d = (splines[i].c - splines[i - 1].c) / h_i;
-            splines[i].b = h_i * (2. * splines[i].c + splines[i - 1].c) / 6. + (getY(i) - getY(i-1)) / h_i;
-    }
-}
-
-void ToolCurvesCurve::calculateCurve(float step)
-{
-    qDebug() << "step" << step;
-    xStep = step;
+    this->xCurveStep = xCurveStep;
     rootPoints->sort();
-    if (rootPoints->size() < 2) return;
-
-    build_spline(rootPoints->size());
-    float epsilon = 0.00001;
-    for (float i=xLeftBound ; i<=xRightBound+epsilon; i+=xStep)
-        addCurvePoint( i, interpolatePoint(i) );
+    if (rootPoints->size() < 2)
+        return;
+    //qDebug() << "GGGGGGGGGGGGGGG" << rootPoints->size();
+    buildBezierSpline( rootPoints->size() );
+    const float epsilon = 0.00001;
+    for ( float xCoord = xAreaLeftBound ;  xCoord <= xAreaRightBound+epsilon; xCoord += xCurveStep)
+        addCurvePoint( Point( xCoord , interpolatePoint(xCoord)) );
     delete[] splines;
     toPointLimit();
 }
 
 float ToolCurvesCurve::interpolatePoint(float x) const
 {
-    if (!splines)
-            return std::numeric_limits<float>::quiet_NaN(); // Если сплайны ещё не построены - возвращаем NaN
+    if (!splines) return std::numeric_limits<float>::quiet_NaN(); // Если сплайны ещё не построены - возвращаем NaN
     BezierSplineTuple *s;
     if (x <= splines[0].x) // Если x меньше точки сетки x[0] - пользуемся первым эл-тов массива
             s = splines + 1;
-    else if (x >= splines[n - 1].x) // Если x больше точки сетки x[n - 1] - пользуемся последним эл-том массива
-            s = splines + n - 1;
+    else if (x >= splines[ rootPointsCount - 1].x) // Если x больше точки сетки x[n - 1] - пользуемся последним эл-том массива
+             s = splines + rootPointsCount - 1;
     else // Иначе x лежит между граничными точками сетки - производим бинарный поиск нужного эл-та массива
     {
-            std::size_t i = 0, j = n - 1;
+            size_t i = 0, j = rootPointsCount - 1;
             while (i + 1 < j)
             {
-                    std::size_t k = i + (j - i) / 2;
+                    size_t k = i + (j - i) / 2;
                     if (x <= splines[k].x)
                             j = k;
                     else
@@ -167,7 +174,12 @@ float ToolCurvesCurve::interpolatePoint(float x) const
             s = splines + j;
     }
     float dx = (x - s->x);
-    return s->a + (s->b + (s->c / 2. + s->d * dx / 6.) * dx) * dx; // Вычисляем значение сплайна в заданной точке.
+    qDebug() << "CURVE" << x << s->a + (s->b + (s->c/2. + s->d*dx/6.) * dx) * dx;
+    return
+    s->a + (s->b + (s->c/2. + s->d*dx/6.) * dx) * dx;
+    //qDebug() << "CURVE" << x << s->a + (s->b + (s->c/2. + s->d*dx/6.) * dx) * dx;
+    // Вычисляем значение сплайна в заданной точке.
+    //return zzz;
 }
 
 
@@ -181,10 +193,10 @@ bool ToolCurvesCurve::isCorrectSize(unsigned int num)
     return false;
 }
 
-bool ToolCurvesCurve::isCorrectPoint(float x, float y)
+bool ToolCurvesCurve::isCorrectPoint(const Point& point)
 {
-    if (( x <= areaLimit->x_max && x >= areaLimit->x_min ) &&
-        ( y <= areaLimit->y_max && y >= areaLimit->y_min))
+    if (( point.x <= areaLimit->xTo && point.x >= areaLimit->xFrom ) &&
+        ( point.y <= areaLimit->yTo && point.y >= areaLimit->yFrom))
         return true;
     return false;
 }
@@ -193,65 +205,36 @@ bool ToolCurvesCurve::isCorrectPoint(float x, float y)
 //
 // Insert, modify, delete point's function
 //
-int ToolCurvesCurve::addPoint(uint num, float x, float y)
+int ToolCurvesCurve::addRootPoint( const Point& point , size_t position )
 {
-    if ( isCorrectPoint(x,y) || num == 0 )
+    if (position == 0)
     {
-        rootPoints->insert(findPointByNum(num), point(x,y) );
+
+        rootPoints->push_back(point);
+        return 1;
+    }
+    if ( isCorrectPoint(point) || position == 0 )
+    {
+        rootPoints->insert( findRootPointByPosition( position ), point );
         return 0;
     }
     return 1;
 }
 
-int ToolCurvesCurve::addPoint(float x, float y)
+int ToolCurvesCurve::addCurvePoint( const Point& point, size_t position )
 {
-    if ( isCorrectPoint(x,y) )
-    {
-        rootPoints->push_back( point(x,y) );
-        return 0;
-    }
-    return 1;
-}
-
-int ToolCurvesCurve::addCurvePoint(unsigned int num, float x, float y)
-{
-    curvePoints->insert(findCurvePointByNum(num), point(x,y) );
+    curvePoints->insert( findCurvePointByPosition( position ), point );
+    //qDebug() << "Add curve" << point.x << point.y;
     return 0;
 }
 
-int ToolCurvesCurve::addCurvePoint(float x, float y)
-{
-    curvePoints->push_back( point(x,y) );
-}
 
-void ToolCurvesCurve::movePoint(unsigned int num, float x_new, float y_new)
+void ToolCurvesCurve::deleteRootPoint( size_t position )
 {
-    if ( isCorrectSize(num) && isCorrectPoint(x_new,y_new) )
-    {
-        std::list<point>::iterator currentPoint = findPointByNum(num);
-        if ( currentPoint != rootPoints->end() )
-        {
-            currentPoint->x = x_new;
-            currentPoint->y = y_new;
-        }
-    }
-}
-
-void ToolCurvesCurve::deletePoint(unsigned int num)
-{
-    std::list<point>::iterator currentPoint = findPointByNum(num);
+    auto currentPoint = findRootPointByPosition( position );
     if ( currentPoint != rootPoints->end() )
         rootPoints->erase(currentPoint);
 }
-
-
-int ToolCurvesCurve::deleteCurvePoint(unsigned int num)
-{
-    std::list<point>::iterator currentPoint = findCurvePointByNum(num);
-    if ( currentPoint != curvePoints->end() )
-    curvePoints->erase(currentPoint);
-}
-
 
 //
 //  Other functions ...
@@ -259,41 +242,24 @@ int ToolCurvesCurve::deleteCurvePoint(unsigned int num)
 
 void ToolCurvesCurve::toPointLimit()
 {
-    for ( std::list<point>::iterator currentPoint = curvePoints->begin() ; currentPoint != curvePoints->end(); currentPoint++ )
+    for ( auto currentPoint = curvePoints->begin() ; currentPoint != curvePoints->end(); currentPoint++ )
     {
         // x - coordinate
-        if (currentPoint->x >  areaLimit->x_max)
-            currentPoint->x = areaLimit->x_max;
+        if (currentPoint->x >  areaLimit->xTo)
+            currentPoint->x = areaLimit->xTo;
         else
-            if ( currentPoint->x < areaLimit->x_min )
-                currentPoint->x = areaLimit->x_min;
+            if ( currentPoint->x < areaLimit->xFrom )
+                currentPoint->x = areaLimit->xFrom;
         // y - coordinate
-        if (currentPoint->y >  areaLimit->y_max)
-            currentPoint->y = areaLimit->y_max;
+        if (currentPoint->y >  areaLimit->yTo)
+            currentPoint->y = areaLimit->yTo;
         else
-            if ( currentPoint->y < areaLimit->y_min )
-                currentPoint->y = areaLimit->y_min;
+            if ( currentPoint->y < areaLimit->yFrom )
+                 currentPoint->y = areaLimit->yFrom;
     }
 }
-void ToolCurvesCurve::dumpPoint(unsigned int num)
-{
-    std::list<point>::iterator currentPoint = findPointByNum(num);
-    if ( currentPoint != rootPoints->end() )
-        qDebug() << "Point [" << num << "] = {" << currentPoint->x << "," << currentPoint->y << "}";
-    else
-        qDebug() << "Point [" << num << "] is not find / exists ";
-}
 
-void ToolCurvesCurve::dumpCurvePoint(unsigned int num)
-{
-    std::list<point>::iterator currentPoint = findCurvePointByNum(num);
-    if ( currentPoint != curvePoints->end() )
-        qDebug() << "     CurvePoint [" << num << "] = {" << currentPoint->x << "," << currentPoint->y << "}";
-    else
-        qDebug() << "Point [" << num << "] is not find / exists ";
-}
-
-void ToolCurvesCurve::selectPoint(std::list<point>::iterator point)
+void ToolCurvesCurve::selectPoint(std::list<Point>::iterator point)
 {
     this->selectedPoint = point;
 }
@@ -303,7 +269,7 @@ void ToolCurvesCurve::deselectPoint()
     selectedPoint = rootPoints->end();
 }
 
-point &point::operator =(const point &pt)
+Point &Point::operator =(const Point &pt)
 {
     if ( this == &pt)
         return *this;
@@ -312,7 +278,7 @@ point &point::operator =(const point &pt)
     return *this;
 }
 
-std::list<point>::iterator ToolCurvesCurve::findPointByCoordinates(float x, float y, float radius_x, float radius_y)
+std::list<Point>::iterator ToolCurvesCurve::findPointByCoordinates(float x, float y, float radius_x, float radius_y)
 {
     // Get points from  rect (x,y,x+radius, y+radius)
     float _x  = x-radius_x;
@@ -320,8 +286,8 @@ std::list<point>::iterator ToolCurvesCurve::findPointByCoordinates(float x, floa
     float _x1 = x+radius_y;
     float _y1 = y+radius_y;
 
-    std::list<point>::iterator currentPoint = rootPoints->begin();
-    std::list<point>::iterator nearestPoint = rootPoints->end();
+    std::list<Point>::iterator currentPoint = rootPoints->begin();
+    std::list<Point>::iterator nearestPoint = rootPoints->end();
     float                      nearetsPointDistance = std::numeric_limits<float>::max();
     for (uint i=0 ; i< rootPoints->size() ; i++)
     {

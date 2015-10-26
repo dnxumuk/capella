@@ -4,7 +4,7 @@
 #
 #-------------------------------------------------
 
-QT       += core gui opengl
+QT       += core gui opengl testlib
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
@@ -40,4 +40,4 @@ HEADERS  += mainwindow.h \
 FORMS    += mainwindow.ui \
     ToolCurvesDialog.ui
 
-QMAKE_CXXFLAGS += -std=c++11 -O2 -msse
+QMAKE_CXXFLAGS += -std=c++11 -o2 -msse
