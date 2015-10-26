@@ -25,9 +25,6 @@ class ToolCurvesCurve
 {
 public:
     std::list<Point>::iterator findPointByNum(unsigned int num);
-    float getY(uint num);
-    float getX(uint num);
-
     std::list<Point> *rootPoints;
     std::list<Point> *curvePoints;
     std::list<Point>::iterator selectedPoint;

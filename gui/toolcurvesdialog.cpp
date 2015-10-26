@@ -2,6 +2,7 @@
 #include "ui_ToolCurvesDialog.h"
 #include <QResizeEvent>
 #include <QMouseEvent>
+#include <QColor>
 #include <math.h>
 #include <QDebug>
 //#include "omp.h"
@@ -13,15 +14,17 @@ ToolCurvesDialog::ToolCurvesDialog (QWidget *pwgt/*=0*/) :
 {
     ui->setupUi(this);
     // Init visual components
+    //selectedPointPtr = nullptr;
     border    = 5;
     grid_size = 8.;
     circle_size = 4.;
     borderPen  = new QPen(Qt::red);
-    gridPen    = new QPen(Qt::lightGray);
-    centerPen  = new QPen(Qt::darkGray);
+    gridPen    = new QPen(QColor("#DDDDDD"));
+    centerPen  = new QPen(QColor("#AAAAAA"));
     pointPen   = new QPen(Qt::gray);
-    curvePen   = new QPen(Qt::darkBlue);
-    curvePen->setWidth(2);
+    curvePen   = new QPen(QColor("#555555"));
+    selectedPoinPen = new QPen(QColor("#c81724"));
+    selectedPoinPen->setWidth(2);
     // Init curve && scene
     curve                 = new ToolCurvesCurve();
     QGraphicsScene *scene = new QGraphicsScene(ui->graphicsView);
@@ -106,7 +109,7 @@ bool ToolCurvesDialog::eventFilter(QObject *obj, QEvent *event)
         case QEvent::MouseButtonRelease:
         {
             processingImage();
-            qDebug() << "Emitting";
+            //qDebug() << "Emitting";
             emit MySetValueSignal(1);
             return true;
         }
@@ -222,16 +225,13 @@ void ToolCurvesDialog::setDefaultValues()
 
 void ToolCurvesDialog::drawPoints()
 {
-    //qDebug() << "Size"  << curve->rootPoints->size();
     QGraphicsScene *scene = ui->graphicsView->scene();
     float zerox = border -  width/2. ;
     float zeroy = border -  height/2. ;
     float circleCorrection = -circle_size/2.;
-
-    for  ( uint i=0; i < curve->rootPoints->size(); i++ )
+    auto iterCurrentPoint = curve->rootPoints->begin();
+    for  ( uint i=0; i < curve->rootPoints->size(); i++, iterCurrentPoint++ )
     {
-        //qDebug() << "Size"  << curve->rootPoints->size();
-        // Graphic scene w/h witout borders
         int dx = width -2*(int)border;
         int dy = height-2*(int)border;
 
@@ -240,11 +240,13 @@ void ToolCurvesDialog::drawPoints()
 
         float dd = zerox + x + circleCorrection;
         float dl = zeroy + y + circleCorrection;
-
+        QPen *circlePen = pointPen;
+        if ( &(*iterCurrentPoint) == &(*(curve->selectedPoint)) )
+            circlePen = selectedPoinPen;
 
         scene->addEllipse( zerox + x + circleCorrection  ,
                              zeroy + y + circleCorrection ,
-                             circle_size, circle_size, *pointPen );
+                             circle_size, circle_size, *circlePen );
 
     }
 }
@@ -282,9 +284,10 @@ void ToolCurvesDialog::redraw()
     curve->curvePoints->clear();
     curve->calculateCurve(redrawBezierCurveStepX);
     ui->graphicsView->scene()->clear();
-    DrawBorder();
+
     DrawGrid();
     drawPoints();
+    DrawBorder();
     drawCurve();
 }
 /*

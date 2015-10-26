@@ -63,77 +63,48 @@ std::list<Point>::iterator ToolCurvesCurve::findCurvePointByPosition( size_t pos
         ++currentPoint;
     return currentPoint;
 }
-/*********************/
-float ToolCurvesCurve::getX(uint num)
-{
-    std::list<Point>::iterator currentPoint = findPointByNum(num);
-    return currentPoint->x;
-}
-
-float ToolCurvesCurve::getY(uint num)
-{
-    std::list<Point>::iterator currentPoint = findPointByNum(num);
-    return currentPoint->y;
-}
-
-std::list<Point>::iterator ToolCurvesCurve::findPointByNum(unsigned int num)
-{
-    if (num >= rootPoints->size() || rootPoints->empty())
-        return rootPoints->end();
-
-    std::list<Point>::iterator currentPoint = rootPoints->begin();
-    for (uint i=0 ; i<num ; i++)
-        ++currentPoint;
-    return currentPoint;
-}
 
 
 void ToolCurvesCurve::buildBezierSpline( size_t rootPointsCount )
 {
-    int n = rootPointsCount;
-    this->rootPointsCount = n;
-     if (n < 2 )
+    this->rootPointsCount = rootPointsCount;
+    if (rootPointsCount < 2 )
          return;
      splines = new BezierSplineTuple[ rootPointsCount ];
-
-     for ( size_t i = 0; i < rootPointsCount; ++i )
+     for ( size_t i = 0; i < this->rootPointsCount; i++ )
      {
              splines[i].x = getRootPointCoordinates(i).x;
              splines[i].a = getRootPointCoordinates(i).y;
-             qDebug() << "Roots" << getRootPointCoordinates(i).x << getRootPointCoordinates(i).y;
      }
      splines[0].c = 0.;
-
-
-     //
-     double *alpha = new double[n - 1];
-     double *beta = new double[n - 1];
-     double A, B, C, F, h_i, h_i1, z;
+     double *alpha = new double[rootPointsCount - 1];
+     double *beta  = new double[rootPointsCount - 1];
+     float A, B, C, F, h_i, h_i1, z;
      alpha[0] = beta[0] = 0.;
-     for (std::size_t i = 1; i < n - 1; ++i)
+     for ( size_t i = 1; i < rootPointsCount - 1; ++i)
      {
-         h_i = getX(i) - getX(i-1), h_i1 = getX(i+1) - getX(i);
+             h_i  = getRootPointCoordinates(i).x   - getRootPointCoordinates(i-1).x,
+             h_i1 = getRootPointCoordinates(i+1).x - getRootPointCoordinates(i).x;
              A = h_i;
              C = 2. * (h_i + h_i1);
              B = h_i1;
-             F = 6. * ( ( getY(i+1) - getY(i) ) / h_i1 - (getY(i) - getY(i-1)) / h_i);
+             F = 6. * ( ( getRootPointCoordinates(i+1).y - getRootPointCoordinates(i).y ) /
+                        h_i1 - (getRootPointCoordinates(i).y - getRootPointCoordinates(i-1).y) / h_i);
              z = (A * alpha[i - 1] + C);
              alpha[i] = -B / z;
              beta[i] = (F - A * beta[i - 1]) / z;
      }
-     splines[n - 1].c = (F - A * beta[n - 2]) / (C + A * alpha[n - 2]);
-     // Нахождение решения - обратный ход метода прогонки
-     for (std::size_t i = n - 2; i > 0; --i)
+     splines[rootPointsCount - 1].c = (F - A * beta[rootPointsCount - 2]) /
+                                      (C + A * alpha[rootPointsCount - 2]);
+     for ( size_t i = rootPointsCount - 2; i > 0; --i)
              splines[i].c = alpha[i] * splines[i + 1].c + beta[i];
-     // Освобождение памяти, занимаемой прогоночными коэффициентами
      delete[] beta;
      delete[] alpha;
-     // По известным коэффициентам c[i] находим значения b[i] и d[i]
-     for (std::size_t i = n - 1; i > 0; --i)
+     for ( size_t i = rootPointsCount - 1; i > 0; --i)
      {
-             double h_i = getX(i) - getX(i-1);
+             double h_i = getRootPointCoordinates(i).x - getRootPointCoordinates(i-1).x;
              splines[i].d = (splines[i].c - splines[i - 1].c) / h_i;
-             splines[i].b = h_i * (2. * splines[i].c + splines[i - 1].c) / 6. + (getY(i) - getY(i-1)) / h_i;
+             splines[i].b = h_i * (2. * splines[i].c + splines[i - 1].c) / 6. + (getRootPointCoordinates(i).y - getRootPointCoordinates(i-1).y) / h_i;
      }
 }
 
@@ -143,7 +114,6 @@ void ToolCurvesCurve::calculateCurve(float xCurveStep)
     rootPoints->sort();
     if (rootPoints->size() < 2)
         return;
-    //qDebug() << "GGGGGGGGGGGGGGG" << rootPoints->size();
     buildBezierSpline( rootPoints->size() );
     const float epsilon = 0.00001;
     for ( float xCoord = xAreaLeftBound ;  xCoord <= xAreaRightBound+epsilon; xCoord += xCurveStep)
@@ -174,12 +144,7 @@ float ToolCurvesCurve::interpolatePoint(float x) const
             s = splines + j;
     }
     float dx = (x - s->x);
-    qDebug() << "CURVE" << x << s->a + (s->b + (s->c/2. + s->d*dx/6.) * dx) * dx;
-    return
-    s->a + (s->b + (s->c/2. + s->d*dx/6.) * dx) * dx;
-    //qDebug() << "CURVE" << x << s->a + (s->b + (s->c/2. + s->d*dx/6.) * dx) * dx;
-    // Вычисляем значение сплайна в заданной точке.
-    //return zzz;
+    return  s->a + (s->b + (s->c/2. + s->d*dx/6.) * dx) * dx;
 }
 
 
@@ -262,6 +227,7 @@ void ToolCurvesCurve::toPointLimit()
 void ToolCurvesCurve::selectPoint(std::list<Point>::iterator point)
 {
     this->selectedPoint = point;
+    //this->selectedPoint
 }
 
 void ToolCurvesCurve::deselectPoint()
