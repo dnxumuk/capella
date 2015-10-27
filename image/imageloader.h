@@ -12,8 +12,9 @@
 
 class ImageLoader
 {
-private:
-    void      imageLoader   ( const QString *filePath, int tileSize = 0 );
+public:
+//private:
+    ImageDisplay*      imageLoader   ( const QString *filePath, int tileSize = 0 );
     void      rgba32tofloat ( const uchar *src, float *dest, size_t width, size_t height);
     void      allocateImage ();
 public:

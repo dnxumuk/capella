@@ -5,23 +5,21 @@
 
 class ImageDisplay
 {
-public:
-        static ImageDisplay& getInstance()
-        {
-                static ImageDisplay theSingleInstance;
-                return theSingleInstance;
-        }
-        void initImage( size_t imageWidth, size_t imageHeight );
-        void destroyImage ();
-        float* getImage () { return imageData;   };
-        size_t getWidth()  { return imageWidth;  };
-        size_t getHeight() { return imageHeight; };
 private:
-        ImageDisplay(){}
-        ImageDisplay(const ImageDisplay& source);
-        ImageDisplay& operator=(const ImageDisplay&);
-        float *imageData;
-        size_t imageWidth;
-        size_t imageHeight;
+    float *imageData;
+    size_t imageWidth;
+    size_t imageHeight;
+public:
+    ImageDisplay(){};
+    ImageDisplay( size_t imageWidth, size_t imageHeight, size_t channelsCount = 3 );
+    ~ImageDisplay() { delete[] imageData; };
+
+    void initImage( size_t imageWidth, size_t imageHeight );
+    void destroyImage ();
+    float* getImage () const { return imageData;   };
+    size_t getWidth()  { return imageWidth;  };
+    size_t getHeight() { return imageHeight; };
+    ImageDisplay& operator=(const ImageDisplay&);
+    ImageDisplay(const ImageDisplay& source);
 };
 #endif // IMAGEDISPLAY_H

@@ -4,7 +4,6 @@
 #include "toolcurvescurve.h"
 #include "./image/imagedisplay.h"
 
-
 namespace Ui
 {
     class ToolCurvesDialog;
@@ -17,7 +16,6 @@ private:
     Ui::ToolCurvesDialog *ui;
     ToolCurvesCurve *curve;
     std::list<Point>::iterator selectedPoint;
-    //Point                      *selectedPointPtr;
     ImageDisplay *img;
     /* Makeup parameters */
     size_t  border;
@@ -48,6 +46,9 @@ private:
     void redraw();
     Point getValues    (const Point& point);
     Point get255Values (const Point& point);
+    void    _LMBClicked ( const QMouseEvent& mouseEvent );
+    void    _MouseMove  ( const QMouseEvent& mouseEvent );
+    float*  buidCoefficentTable(  const size_t tableSize );
 public:
     explicit ToolCurvesDialog (QWidget *pwgt = 0);
     virtual void resizeEvent ( QResizeEvent * event );

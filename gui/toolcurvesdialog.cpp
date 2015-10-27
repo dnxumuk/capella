@@ -5,7 +5,6 @@
 #include <QColor>
 #include <math.h>
 #include <QDebug>
-//#include "omp.h"
 #include <xmmintrin.h>
 
 
@@ -14,7 +13,6 @@ ToolCurvesDialog::ToolCurvesDialog (QWidget *pwgt/*=0*/) :
 {
     ui->setupUi(this);
     // Init visual components
-    //selectedPointPtr = nullptr;
     border    = 5;
     grid_size = 8.;
     circle_size = 4.;
@@ -58,7 +56,6 @@ void ToolCurvesDialog::setImage(ImageDisplay &img)
     */
 }
 
-
 bool ToolCurvesDialog::eventFilter(QObject *obj, QEvent *event)
 {
     switch ( event->type() )
@@ -68,109 +65,53 @@ bool ToolCurvesDialog::eventFilter(QObject *obj, QEvent *event)
             QMouseEvent *mouseEvent = static_cast<QMouseEvent*>(event);
             if (mouseEvent->buttons() & Qt::LeftButton)
             {
-                // LMB pressed. Add new point or select from existing &
-
-                Point mouseCoord = get255Values( Point( mouseEvent->x(),mouseEvent->y() ) );
-                Point radius     = get255Values( Point(10,10) );
-                std::list<Point>::iterator xxx = curve->findPointByCoordinates(mouseCoord.x,mouseCoord.y, radius.x, radius.y);
-                if (curve->pointExists(xxx))
-                {
-                    qDebug() << "     Nearest point ... " << xxx->x << xxx->y;
-                    curve->selectPoint(xxx);
-                }
-                else
-                {
-                    QGraphicsScene *scene = ui->graphicsView->scene();
-                    Point pt = get255Values( Point (mouseEvent->pos().x(),
-                                                    mouseEvent->pos().y()) );
-                    qDebug() << "Add" << pt.x << pt.y;
-                    curve->addRootPoint(pt);
-                    redraw();
-                }
+                _LMBClicked( *mouseEvent );
             }
             else if (mouseEvent->buttons() & Qt::RightButton)
             {
-                qDebug() << "Right click detected";
+                // Right click detected. Do something
             }
             return true;
         }
         case QEvent::MouseMove:
         {
             QMouseEvent *mouseEvent = static_cast<QMouseEvent*>(event);
-            if ( (mouseEvent->buttons() & Qt::LeftButton) && curve->pointExists(selectedPoint))
-            {
-                Point newCoord = get255Values( Point(mouseEvent->x(),mouseEvent->y()) );
-                curve->selectedPoint->x = newCoord.x;
-                curve->selectedPoint->y = newCoord.y;
-                redraw();
-            }
-                return true;
+            _MouseMove( *mouseEvent );
+            return true;
         }
         case QEvent::MouseButtonRelease:
         {
             processingImage();
-            //qDebug() << "Emitting";
             emit MySetValueSignal(1);
             return true;
         }
-        case QEvent::KeyPress:
-        {
-            return true;
-        }
-        default :
-        {
-            return false;
-        }
+        case QEvent::KeyPress: { return true; }
+        default : { return false; }
     }
 }
-
 inline int FastToInt( float f )
 {
     return _mm_cvtss_si32( _mm_load_ss( &f ) );
 }
-
-
 inline float getSuperPrecisionValue(float x, float x0, float x1, float y0,float y1)
 {
-    float  dy  = y1-y0;
-    float  dx0 = x - x0;
-    float  dx1 = x1 - x;
-    float  dy1 = dy*dx0/dx1;
-    return dy1 + y0;
+    return y0 + (y1-y0)*(x-x0)/(x1-x);
 }
-
 void ToolCurvesDialog::processingImage()
 {
     if (curve->curvePoints->size() < 3)
         return;
     ImageDisplay &img = *(this->img);
+    const size_t  tableSize = 256;
+    float* coef = buidCoefficentTable( tableSize );
     // Make array coefs
-    const unsigned long  size_of = 256;
-    float coef[size_of];
-    for (uint i=0 ; i< size_of; i++)
-    {
-        for (auto iterCurvePoint = curve->curvePoints->begin(); iterCurvePoint != curve->curvePoints->end(); iterCurvePoint++)
-        {
-            if ( i/(size_of/1.-1.) <= iterCurvePoint->x )
-            {
-                auto next = iterCurvePoint;
-                ++next;
-                coef[i] = 1 - getSuperPrecisionValue( i/(size_of/1.-1.), iterCurvePoint->x, next->x,
-                                                                         iterCurvePoint->y, next->y );
-                //qDebug() << "Coef " << i << " is " << coef[i];
-                break;
-            }
-        }
-    }
-    //
-    bool channelProcessing[4] = { false, false, false, false };
-
+    bool channelProcessing[4] = { false, true, false, false };
     float* tmp = img.getImage();
     for (uint j=0 ; j< img.getWidth()*img.getHeight(); j++ )
     {
-        *(tmp)   = channelProcessing[0] ? coef[FastToInt(*(tmp  )*(size_of-1))]    :  *(tmp)   ;
-        *(tmp+1) = channelProcessing[1] ? coef[FastToInt(*(tmp+1)*(size_of-1))]:  *(tmp+1)   ;
-        *(tmp+2) = channelProcessing[2] ? coef[FastToInt(*(tmp+2)*(size_of-1))]:  *(tmp+2)   ;
+        *(tmp)   = channelProcessing[0] ? coef[FastToInt(*(tmp  )*(tableSize-1))]    :  *(tmp)   ;
+        *(tmp+1) = channelProcessing[1] ? coef[FastToInt(*(tmp+1)*(tableSize-1))]:  *(tmp+1)   ;
+        *(tmp+2) = channelProcessing[2] ? coef[FastToInt(*(tmp+2)*(tableSize-1))]:  *(tmp+2)   ;
           tmp+=3;
     }
 }
@@ -204,7 +145,6 @@ void ToolCurvesDialog::DrawGrid()
     }
 }
 
-// Ok
 void ToolCurvesDialog::DrawBorder()
 {
     QGraphicsScene *scene = ui->graphicsView->scene();
@@ -290,6 +230,7 @@ void ToolCurvesDialog::redraw()
     DrawBorder();
     drawCurve();
 }
+
 /*
  *  Returning relation coordiantes of point relates of area inside border
  */
@@ -297,6 +238,59 @@ Point ToolCurvesDialog::get255Values(const Point &pt)
 {
     return Point ( (float)(pt.x - border) / (width  - 2*border) ,
                    (float)(pt.y - border) / (height - 2*border)
-                 );
+                   );
+}
+
+void ToolCurvesDialog::_MouseMove(const QMouseEvent &mouseEvent)
+{
+    if ( (mouseEvent.buttons() & Qt::LeftButton) && curve->pointExists(selectedPoint))
+    {
+        Point newCoord = get255Values( Point(mouseEvent.x(),mouseEvent.y()) );
+        *(curve->selectedPoint) = newCoord;
+        ui->currentPointXCoord->setValue(newCoord.x);
+        ui->currentPointYCoord->setValue(newCoord.y);
+        redraw();
+    }
+}
+
+float *ToolCurvesDialog::buidCoefficentTable( const size_t tableSize )
+{
+    //const size_t  tableSize = 256;
+    float* coefficientTable = new float[tableSize];
+
+    for ( size_t i=0 ; i < tableSize; i++)
+    {
+        for (auto iterCurvePoint  = curve->curvePoints->begin();
+                  iterCurvePoint != curve->curvePoints->end(); iterCurvePoint++)
+        {
+            if ( iterCurvePoint->x >= i/( (float)tableSize -1.) )
+            {
+                auto next = iterCurvePoint;
+                ++next;
+                coefficientTable[i] = 1 - getSuperPrecisionValue( i/( (float)tableSize - 1.),
+                                                                  iterCurvePoint->x, next->x,
+                                                                  iterCurvePoint->y, next->y );
+                break;
+            }
+        }
+    }
+    return coefficientTable;
+}
+
+void ToolCurvesDialog::_LMBClicked( const QMouseEvent& mouseEvent)
+{
+    Point mouseCoord = get255Values( Point( mouseEvent.x(),mouseEvent.y() ) );
+    Point radius     = get255Values( Point(10,10) );
+    auto nearestPoint = curve->findPointByCoordinates(mouseCoord.x,mouseCoord.y, radius.x, radius.y);
+    if (curve->pointExists(nearestPoint))
+    {
+        curve->selectPoint(nearestPoint);
+    }
+    else
+    {
+        Point point   = get255Values( Point(mouseEvent.pos().x(),mouseEvent.pos().y()) );
+        curve->addRootPoint(point);
+        redraw();
+    }
 }
 

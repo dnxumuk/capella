@@ -15,7 +15,7 @@ class FrameDisplayGL : public QGLWidget
          /*My types*/
          size_t currWidth;
          size_t currHeight;
-         float zoom = 1;
+         float zoom = 0.1;
   protected:
        void initGL();
        void resizeGL(int newWidth, int newHeight);
@@ -24,7 +24,7 @@ class FrameDisplayGL : public QGLWidget
        FrameDisplayGL(QWidget* parent = 0);
        ~FrameDisplayGL();
        void dumpSize();
-       //ImageLayer *image;
+       ImageDisplay *image;
   public slots:
        void redraw();
 };

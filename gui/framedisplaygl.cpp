@@ -14,7 +14,8 @@ FrameDisplayGL ::FrameDisplayGL(QWidget *parent)
     Profiler timer(msg);
     timer.start();
     ImageLoader i;
-    i.loadImage("/home/xmk/programming/capella/test/images/rgb.bmp", 1 );
+    QString x("/home/xmk/programming/capella/test/images/m51.jpg");
+    image = i.imageLoader( &x, 0 );
 
     //i.loadImage("/home/xmk/programming/skeleton/test/images/m42.jpg", 1 );
     timer.finish();
@@ -22,7 +23,7 @@ FrameDisplayGL ::FrameDisplayGL(QWidget *parent)
 
 FrameDisplayGL ::~FrameDisplayGL()
 {
-    //delete image;
+    delete image;
 }
 
 
@@ -32,17 +33,15 @@ void FrameDisplayGL ::initGL()
     qglClearColor(Qt::black);
     glEnable(GL_TEXTURE_2D);
     glEnable(GL_LINES);
-
-
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glLoadIdentity();
+    glPixelZoom(zoom,zoom);
 }
 
 void FrameDisplayGL ::resizeGL(int newWidth, int newHeight)
 {
     currWidth =visibleRegion().boundingRect().width();
     currHeight=visibleRegion().boundingRect().height();
-
     glViewport( 0,0,newWidth,newHeight );
     glMatrixMode( GL_PROJECTION );
          glLoadIdentity();
@@ -56,21 +55,15 @@ void FrameDisplayGL ::resizeGL(int newWidth, int newHeight)
 
 void FrameDisplayGL::paintGL()
 {
+    ImageDisplay* displayedImage = image;
     glRasterPos2d(0,currHeight);                  // нижний левый угол
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);        // выравнивание
-    glPixelZoom(zoom,zoom);
-      //QString msg = QString("Drawing image using OpenGL");
-      //Profiler *timer = new Profiler(msg);
-      //timer->start();
-      ImageDisplay* displayedImage = &ImageDisplay::getInstance();
-
-      glDrawPixels( displayedImage->getWidth(),
-                    displayedImage->getHeight(),
-                    GL_RGB,
-                    GL_FLOAT,
-                    displayedImage->getImage() );
-      //timer->finish();
-      //delete timer;
+    glPixelZoom( 1 , 1 );
+    glDrawPixels( displayedImage->getWidth(),
+                  displayedImage->getHeight(),
+                  GL_RGB,
+                  GL_FLOAT,
+                  displayedImage->getImage() );
 }
 
 void FrameDisplayGL::redraw()

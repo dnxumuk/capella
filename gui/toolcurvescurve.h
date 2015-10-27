@@ -32,7 +32,7 @@ public:
     Rectangle         *areaLimit;
     std::list<Point>::iterator findRootPointByPosition  (size_t position );
     std::list<Point>::iterator findCurvePointByPosition (size_t position );
-    std::size_t rootPointsCount; // Количество узлов сетки
+    std::size_t rootPointsCount;
 
     void  buildBezierSpline( size_t rootPointsCount );
     void  calculateCurve   ( float step );
@@ -40,7 +40,7 @@ public:
 
 
     void toPointLimit();
-    bool isCorrectSize  (uint num);
+    bool isCorrectSize  ( size_t postion );
     bool isCorrectPoint ( const Point& point );
 
     float xAreaLeftBound;

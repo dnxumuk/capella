@@ -76,14 +76,7 @@ float *ImageLayer::getPixelPtr(size_t row, size_t column, size_t channel) const
         return nullptr;
     return pointPointer + channel;
 }
-///
-/// \brief ImageLayer::extractTile
-/// \param tileNumber
-/// \return
-///
-///
-///
-///
+
 ImageTile &ImageLayer::extractTile(size_t tileNumber)
 {
     if ( tileNumber > tiles->size() )

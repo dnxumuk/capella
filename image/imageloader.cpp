@@ -26,7 +26,7 @@ Image *ImageLoader::loadImage( const QString *filePath , int tileSize /*=0*/ )
     imageLoader(filePath , tileSize );
 }
 
-void ImageLoader::imageLoader( const QString *filePath , int tileSize )
+ImageDisplay* ImageLoader::imageLoader( const QString *filePath , int tileSize )
 {
     // Load QPixmap  >> QImage
     // Create Image object
@@ -34,7 +34,9 @@ void ImageLoader::imageLoader( const QString *filePath , int tileSize )
     QPixmap imagePixmap    = QPixmap(*filePath);
     QImage  imageSourcePtr = QImage (imagePixmap.toImage());
 
-    ImageDisplay* imagePtr = &(ImageDisplay::getInstance());
+    ImageDisplay* imagePtr = new ImageDisplay();
+    //imagePtr->imageWidth  =  imageSourcePtr.width();
+    //imagePtr->imageHeight =  imageSourcePtr.height();
     imagePtr->initImage( imageSourcePtr.width() , imageSourcePtr.height() );
 
     rgba32tofloat( imageSourcePtr.bits(),
@@ -42,6 +44,7 @@ void ImageLoader::imageLoader( const QString *filePath , int tileSize )
                    imageSourcePtr.width(),
                    imageSourcePtr.height()
                   );
+    return imagePtr;
     //return image;
 }
 

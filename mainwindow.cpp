@@ -9,7 +9,6 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
 {
     ui->setupUi(this);
     frame = new FrameDisplayGL;
-    //frame->resizeGL(10,10);
     setCentralWidget(frame);
     connect( ui->actionLAB_RGB, SIGNAL( triggered(bool) ), SLOT(Curve()) );
 
@@ -23,10 +22,9 @@ MainWindow::~MainWindow()
 
 void MainWindow::Curve()
 {
-    qDebug() << "AAAAAAAAAAAAAAAAAAAAaa";
     ToolCurvesDialog *xxx = new ToolCurvesDialog();
     connect(xxx,SIGNAL(MySetValueSignal(int)), frame, SLOT(redraw()));
-    ImageDisplay *img = &(ImageDisplay::getInstance());
-    xxx->setImage(*img);
+    //ImageDisplay x = *(frame->image);
+    xxx->setImage(*(frame->image));
     xxx->exec();
 }

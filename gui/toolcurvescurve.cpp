@@ -147,13 +147,9 @@ float ToolCurvesCurve::interpolatePoint(float x) const
     return  s->a + (s->b + (s->c/2. + s->d*dx/6.) * dx) * dx;
 }
 
-
-//
-// Checking methods
-//
-bool ToolCurvesCurve::isCorrectSize(unsigned int num)
+bool ToolCurvesCurve::isCorrectSize( size_t position )
 {
-    if ( num < rootPoints->size() )
+    if ( position < rootPoints->size() )
         return true;
     return false;
 }
@@ -166,21 +162,12 @@ bool ToolCurvesCurve::isCorrectPoint(const Point& point)
     return false;
 }
 
-
-//
-// Insert, modify, delete point's function
-//
 int ToolCurvesCurve::addRootPoint( const Point& point , size_t position )
 {
-    if (position == 0)
-    {
-
-        rootPoints->push_back(point);
-        return 1;
-    }
     if ( isCorrectPoint(point) || position == 0 )
     {
         rootPoints->insert( findRootPointByPosition( position ), point );
+        selectedPoint = findRootPointByPosition( position );
         return 0;
     }
     return 1;
@@ -189,7 +176,6 @@ int ToolCurvesCurve::addRootPoint( const Point& point , size_t position )
 int ToolCurvesCurve::addCurvePoint( const Point& point, size_t position )
 {
     curvePoints->insert( findCurvePointByPosition( position ), point );
-    //qDebug() << "Add curve" << point.x << point.y;
     return 0;
 }
 
@@ -200,11 +186,6 @@ void ToolCurvesCurve::deleteRootPoint( size_t position )
     if ( currentPoint != rootPoints->end() )
         rootPoints->erase(currentPoint);
 }
-
-//
-//  Other functions ...
-//
-
 void ToolCurvesCurve::toPointLimit()
 {
     for ( auto currentPoint = curvePoints->begin() ; currentPoint != curvePoints->end(); currentPoint++ )
@@ -227,14 +208,11 @@ void ToolCurvesCurve::toPointLimit()
 void ToolCurvesCurve::selectPoint(std::list<Point>::iterator point)
 {
     this->selectedPoint = point;
-    //this->selectedPoint
 }
-
 void ToolCurvesCurve::deselectPoint()
 {
     selectedPoint = rootPoints->end();
 }
-
 Point &Point::operator =(const Point &pt)
 {
     if ( this == &pt)
@@ -243,7 +221,6 @@ Point &Point::operator =(const Point &pt)
     this->y = pt.y;
     return *this;
 }
-
 std::list<Point>::iterator ToolCurvesCurve::findPointByCoordinates(float x, float y, float radius_x, float radius_y)
 {
     // Get points from  rect (x,y,x+radius, y+radius)
